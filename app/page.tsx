@@ -3,8 +3,6 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Users, HeartHandshake } from "lucide-react";
 import { createClient } from "@/utils/supabase/server";
 
-export const revalidate = 0;
-
 export default async function DashboardPage() {
   const supabase = await createClient();
 
