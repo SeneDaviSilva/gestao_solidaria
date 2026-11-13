@@ -1,9 +1,29 @@
+import { Suspense } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Users, HeartHandshake } from "lucide-react";
 import { createClient } from "@/utils/supabase/server";
 
-export default async function DashboardPage() {
+type RecentAttendance = {
+  id: string;
+  type: string;
+  date: string;
+  beneficiaries?: { name: string }[];
+};
+
+export default function DashboardPage() {
+  return (
+    <Suspense
+      fallback={
+        <p className="text-sm text-zinc-500">Carregando indicadores...</p>
+      }
+    >
+      <DashboardContent />
+    </Suspense>
+  );
+}
+
+async function DashboardContent() {
   const supabase = await createClient();
 
   const { count: beneficiariesCount } = await supabase
@@ -68,9 +88,11 @@ export default async function DashboardPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {recentAttendances?.map((attendance: any) => (
+              {recentAttendances?.map((attendance: RecentAttendance) => (
                 <TableRow className="border-zinc-100 transition-colors" key={attendance.id}>
-                  <TableCell className="text-zinc-900">{attendance.beneficiaries?.name}</TableCell>
+                  <TableCell className="text-zinc-900">
+                    {attendance.beneficiaries?.[0]?.name}
+                  </TableCell>
                   <TableCell className="text-zinc-600">{attendance.type}</TableCell>
                   <TableCell className="text-right text-zinc-500">
                     {new Date(attendance.date).toLocaleDateString('pt-BR')}
