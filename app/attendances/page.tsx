@@ -1,5 +1,7 @@
 import { Suspense } from "react";
 import { AddAttendanceDialog } from "@/components/AddAttendanceDialog";
+import { DeleteRecordButton } from "@/components/DeleteRecordButton";
+import { ExportExcelButton } from "@/components/ExportExcelButton";
 import { TableFilters } from "@/components/ui/TableFilters";
 import {
   Card,
@@ -18,6 +20,7 @@ import {
 import { getAttendances } from "@/utils/supabase/attendances";
 import { getBeneficiaries } from "@/utils/supabase/beneficiaries";
 import { getSupportTypes } from "@/services/supportTypes";
+import { deleteAttendance } from "@/services/attendances";
 
 type PageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
@@ -54,6 +57,12 @@ async function AttendanceContent({ searchParams }: PageProps) {
     id,
     name,
   }));
+  const exportData = attendances.map((record) => ({
+    Assistido: record.beneficiaries?.name || "Desconhecido",
+    "Apoio Concedido": record.type,
+    Detalhes: record.description || "—",
+    Data: new Date(record.date).toLocaleDateString("pt-BR"),
+  }));
 
   return (
     <div className="max-w-5xl space-y-6">
@@ -64,10 +73,17 @@ async function AttendanceContent({ searchParams }: PageProps) {
             Histórico de entregas e serviços prestados.
           </p>
         </div>
-        <AddAttendanceDialog
-          beneficiaries={mappedBeneficiaries}
-          supportTypes={supportTypes}
-        />
+        <div className="flex flex-col gap-2 sm:flex-row">
+          <ExportExcelButton
+            data={exportData}
+            fileName="atendimentos"
+            sheetName="Atendimentos"
+          />
+          <AddAttendanceDialog
+            beneficiaries={mappedBeneficiaries}
+            supportTypes={supportTypes}
+          />
+        </div>
       </div>
 
       <TableFilters showTypeFilter />
@@ -87,6 +103,7 @@ async function AttendanceContent({ searchParams }: PageProps) {
                   <TableHead>Apoio Concedido</TableHead>
                   <TableHead>Detalhes</TableHead>
                   <TableHead className="text-right">Data</TableHead>
+                  <TableHead className="text-right">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -102,13 +119,20 @@ async function AttendanceContent({ searchParams }: PageProps) {
                     <TableCell className="text-right">
                       {new Date(record.date).toLocaleDateString("pt-BR")}
                     </TableCell>
+                    <TableCell className="text-right">
+                      <DeleteRecordButton
+                        confirmMessage="Tem certeza de que deseja excluir este atendimento? Esta ação não pode ser desfeita."
+                        id={record.id}
+                        onDelete={deleteAttendance}
+                      />
+                    </TableCell>
                   </TableRow>
                 ))}
                 {attendances.length === 0 && (
                   <TableRow>
                     <TableCell
                       className="py-8 text-center text-zinc-500"
-                      colSpan={4}
+                      colSpan={5}
                     >
                       Nenhum atendimento encontrado.
                     </TableCell>

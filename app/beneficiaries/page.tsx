@@ -14,9 +14,12 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { AddBeneficiaryDialog } from "@/components/AddBeneficiaryDialog";
+import { DeleteRecordButton } from "@/components/DeleteRecordButton";
+import { ExportExcelButton } from "@/components/ExportExcelButton";
 import { TableFilters } from "@/components/ui/TableFilters";
 import { getBeneficiaries } from "@/utils/supabase/beneficiaries";
 import { getSupportTypes } from "@/services/supportTypes";
+import { deleteBeneficiary } from "@/services/beneficiaries";
 
 type PageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
@@ -39,7 +42,19 @@ export default function BeneficiariesPage({ searchParams }: PageProps) {
 }
 
 async function BeneficiaryContent({ searchParams }: PageProps) {
-  const supportTypes = await getSupportTypes();
+  const [resolvedParams, supportTypes] = await Promise.all([
+    searchParams,
+    getSupportTypes(),
+  ]);
+  const query =
+    typeof resolvedParams.q === "string" ? resolvedParams.q : undefined;
+  const beneficiaries = await getBeneficiaries(query);
+  const exportData = beneficiaries.map((person) => ({
+    Nome: person.name,
+    Contato: person.contact || "—",
+    Categoria: person.category || "—",
+    "Data de Cadastro": new Date(person.created_at).toLocaleDateString("pt-BR"),
+  }));
 
   return (
     <div className="max-w-5xl space-y-6">
@@ -50,76 +65,78 @@ async function BeneficiaryContent({ searchParams }: PageProps) {
             Gerencie as famílias e indivíduos cadastrados na ONG.
           </p>
         </div>
-        <AddBeneficiaryDialog supportTypes={supportTypes} />
+        <div className="flex flex-col gap-2 sm:flex-row">
+          <ExportExcelButton
+            data={exportData}
+            fileName="assistidos"
+            sheetName="Assistidos"
+          />
+          <AddBeneficiaryDialog supportTypes={supportTypes} />
+        </div>
       </div>
 
-      <Suspense
-        fallback={
-          <Card>
-            <CardContent className="py-8 text-center text-zinc-500">
-              Carregando assistidos...
-            </CardContent>
-          </Card>
-        }
-      >
-        <BeneficiaryList searchParams={searchParams} />
-      </Suspense>
+      <TableFilters showTypeFilter={false} />
+      <BeneficiaryList beneficiaries={beneficiaries} />
     </div>
   );
 }
 
-async function BeneficiaryList({ searchParams }: PageProps) {
-  const resolvedParams = await searchParams;
-  const query =
-    typeof resolvedParams.q === "string" ? resolvedParams.q : undefined;
-  const beneficiaries = await getBeneficiaries(query);
-
+function BeneficiaryList({
+  beneficiaries,
+}: {
+  beneficiaries: Awaited<ReturnType<typeof getBeneficiaries>>;
+}) {
   return (
-    <>
-      <TableFilters showTypeFilter={false} />
-      <Card className="border-zinc-200 shadow-sm">
-        <CardHeader>
-          <CardTitle className="text-lg font-medium">
-            Lista de Assistidos
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Nome</TableHead>
-                  <TableHead>Contato</TableHead>
-                  <TableHead>Categoria</TableHead>
-                  <TableHead className="text-right">Data de Cadastro</TableHead>
+    <Card className="border-zinc-200 shadow-sm">
+      <CardHeader>
+        <CardTitle className="text-lg font-medium">
+          Lista de Assistidos
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Nome</TableHead>
+                <TableHead>Contato</TableHead>
+                <TableHead>Categoria</TableHead>
+                <TableHead className="text-right">Data de Cadastro</TableHead>
+                <TableHead className="text-right">Ações</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {beneficiaries.map((person) => (
+                <TableRow key={person.id}>
+                  <TableCell className="font-medium">{person.name}</TableCell>
+                  <TableCell>{person.contact || "—"}</TableCell>
+                  <TableCell>{person.category || "—"}</TableCell>
+                  <TableCell className="text-right">
+                    {new Date(person.created_at).toLocaleDateString("pt-BR")}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <DeleteRecordButton
+                      confirmMessage="Tem certeza de que deseja excluir este assistido? Os atendimentos vinculados a ele também serão apagados. Esta ação não pode ser desfeita."
+                      id={person.id}
+                      onDelete={deleteBeneficiary}
+                    />
+                  </TableCell>
                 </TableRow>
-              </TableHeader>
-              <TableBody>
-                {beneficiaries.map((person) => (
-                  <TableRow key={person.id}>
-                    <TableCell className="font-medium">{person.name}</TableCell>
-                    <TableCell>{person.contact || "—"}</TableCell>
-                    <TableCell>{person.category || "—"}</TableCell>
-                    <TableCell className="text-right">
-                      {new Date(person.created_at).toLocaleDateString("pt-BR")}
-                    </TableCell>
-                  </TableRow>
-                ))}
-                {beneficiaries.length === 0 && (
-                  <TableRow>
-                    <TableCell
-                      className="py-8 text-center text-zinc-500"
-                      colSpan={4}
-                    >
-                      Nenhum assistido encontrado.
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </div>
-        </CardContent>
-      </Card>
-    </>
+              ))}
+              {beneficiaries.length === 0 && (
+                <TableRow>
+                  <TableCell
+                    className="py-8 text-center text-zinc-500"
+                    colSpan={5}
+                  >
+                    Nenhum assistido encontrado.
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </div>
+      </CardContent>
+    </Card>
   );
 }
