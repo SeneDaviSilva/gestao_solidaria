@@ -174,7 +174,7 @@ export function BulkAttendancesDialog({
         render={
           <Button className="border-zinc-200 dark:border-zinc-700" variant="outline">
             <ListPlus className="mr-2 h-4 w-4" />
-            Importar em Massa
+            Cadastrar em Massa
           </Button>
         }
       />
