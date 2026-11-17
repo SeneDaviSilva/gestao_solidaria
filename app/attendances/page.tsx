@@ -24,6 +24,7 @@ import {
   getAttendances,
 } from "@/services/attendances";
 import { getBeneficiaries } from "@/services/beneficiaries";
+import { getOrganizationSettings } from "@/services/settings";
 import { getSupportTypes } from "@/services/supportTypes";
 import { resolveSortBy, resolveSortOrder } from "@/utils/sorting";
 
@@ -59,11 +60,13 @@ async function AttendanceContent({ searchParams }: PageProps) {
   const sortOrder = resolveSortOrder(
     typeof resolvedParams.order === "string" ? resolvedParams.order : null,
   );
-  const [attendances, beneficiaries, supportTypes] = await Promise.all([
-    getAttendances(query, type, sortBy, sortOrder),
-    getBeneficiaries(),
-    getSupportTypes(),
-  ]);
+  const [attendances, beneficiaries, supportTypes, orgSettings] =
+    await Promise.all([
+      getAttendances(query, type, sortBy, sortOrder),
+      getBeneficiaries(),
+      getSupportTypes(),
+      getOrganizationSettings(),
+    ]);
   const mappedBeneficiaries = beneficiaries.map(({ id, name }) => ({
     id,
     name,
@@ -87,8 +90,16 @@ async function AttendanceContent({ searchParams }: PageProps) {
         </div>
         <div className="flex flex-col gap-2 sm:flex-row">
           <ExportExcelButton
+            columns={[
+              "Assistido",
+              "Apoio Concedido",
+              "Detalhes",
+              "Data",
+              "Registrado por",
+            ]}
             data={exportData}
             fileName="atendimentos"
+            orgSettings={orgSettings}
             sheetName="Atendimentos"
           />
           <AddAttendanceDialog

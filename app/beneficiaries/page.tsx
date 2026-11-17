@@ -20,6 +20,7 @@ import { SortControls } from "@/components/SortControls";
 import { SortableHeader } from "@/components/SortableHeader";
 import { TableFilters } from "@/components/ui/TableFilters";
 import { getBeneficiaries } from "@/services/beneficiaries";
+import { getOrganizationSettings } from "@/services/settings";
 import { getSupportTypes } from "@/services/supportTypes";
 import { deleteBeneficiary } from "@/services/beneficiaries";
 import { resolveSortBy, resolveSortOrder } from "@/utils/sorting";
@@ -45,9 +46,10 @@ export default function BeneficiariesPage({ searchParams }: PageProps) {
 }
 
 async function BeneficiaryContent({ searchParams }: PageProps) {
-  const [resolvedParams, supportTypes] = await Promise.all([
+  const [resolvedParams, supportTypes, orgSettings] = await Promise.all([
     searchParams,
     getSupportTypes(),
+    getOrganizationSettings(),
   ]);
   const query =
     typeof resolvedParams.q === "string" ? resolvedParams.q : undefined;
@@ -77,8 +79,16 @@ async function BeneficiaryContent({ searchParams }: PageProps) {
         </div>
         <div className="flex flex-col gap-2 sm:flex-row">
           <ExportExcelButton
+            columns={[
+              "Nome",
+              "Contato",
+              "Categoria",
+              "Data de Cadastro",
+              "Registrado por",
+            ]}
             data={exportData}
             fileName="assistidos"
+            orgSettings={orgSettings}
             sheetName="Assistidos"
           />
           <AddBeneficiaryDialog supportTypes={supportTypes} />
