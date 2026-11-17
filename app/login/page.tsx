@@ -15,6 +15,7 @@ import { Label } from "@/components/ui/label";
 import { createClient } from "@/utils/supabase/client";
 
 export default function LoginPage() {
+  const [isSignUp, setIsSignUp] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const router = useRouter();
@@ -26,8 +27,10 @@ export default function LoginPage() {
     setLoading(true);
 
     const formData = new FormData(event.currentTarget);
+    const name = formData.get("name");
     const email = formData.get("email");
     const password = formData.get("password");
+    const fullName = typeof name === "string" ? name.trim() : "";
 
     if (typeof email !== "string" || typeof password !== "string") {
       setErrorMessage("Informe seu e-mail e sua senha.");
@@ -35,7 +38,57 @@ export default function LoginPage() {
       return;
     }
 
+    if (isSignUp && !fullName) {
+      setErrorMessage("Informe seu nome completo.");
+      setLoading(false);
+      return;
+    }
+
+    if (isSignUp && password.length < 6) {
+      setErrorMessage("A senha deve ter pelo menos 6 caracteres.");
+      setLoading(false);
+      return;
+    }
+
     try {
+      if (isSignUp) {
+        const { data, error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            data: { full_name: fullName },
+          },
+        });
+
+        if (error) {
+          const message =
+            "Não foi possível criar a conta. Verifique o e-mail e se a senha tem pelo menos 6 caracteres.";
+          setErrorMessage(message);
+          toast.error(message);
+          return;
+        }
+
+        if (data.session) {
+          toast.success("Conta criada com sucesso!");
+          router.push("/");
+          router.refresh();
+          return;
+        }
+
+        if (data.user) {
+          toast.success(
+            "Conta criada. Verifique seu e-mail para confirmar o cadastro.",
+          );
+          setIsSignUp(false);
+          return;
+        }
+
+        const message = "Não foi possível confirmar a criação da conta.";
+        setErrorMessage(message);
+        toast.error(message);
+        return;
+      }
+
       const { error } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -51,12 +104,16 @@ export default function LoginPage() {
       router.push("/");
       router.refresh();
     } catch (error) {
-      const message =
-        error instanceof Error
+      const message = isSignUp
+        ? "Não foi possível criar a conta. Tente novamente."
+        : error instanceof Error
           ? error.message
           : "Não foi possível entrar. Tente novamente.";
       setErrorMessage(message);
-      toast.error("Não foi possível entrar.", { description: message });
+      toast.error(
+        isSignUp ? "Não foi possível criar a conta." : "Não foi possível entrar.",
+        { description: message },
+      );
     } finally {
       setLoading(false);
     }
@@ -66,13 +123,30 @@ export default function LoginPage() {
     <main className="flex min-h-screen items-center justify-center p-4">
       <Card className="w-full max-w-sm border-zinc-200 shadow-sm">
         <CardHeader>
-          <CardTitle className="text-xl">Gestão Solidária</CardTitle>
+          <CardTitle className="text-xl">
+            {isSignUp ? "Criar nova conta" : "Entrar no sistema"}
+          </CardTitle>
           <p className="text-sm text-zinc-500">
-            Entre com seu e-mail e senha para continuar.
+            {isSignUp
+              ? "Preencha seus dados para criar uma conta."
+              : "Gestão Solidária"}
           </p>
         </CardHeader>
         <CardContent>
           <form className="space-y-4" onSubmit={onSubmit}>
+            {isSignUp && (
+              <div className="space-y-2">
+                <Label htmlFor="name">Nome completo</Label>
+                <Input
+                  autoComplete="name"
+                  className="border-zinc-200"
+                  id="name"
+                  name="name"
+                  required
+                  type="text"
+                />
+              </div>
+            )}
             <div className="space-y-2">
               <Label htmlFor="email">E-mail</Label>
               <Input
@@ -91,6 +165,7 @@ export default function LoginPage() {
                 className="border-zinc-200"
                 id="password"
                 name="password"
+                minLength={isSignUp ? 6 : undefined}
                 required
                 type="password"
               />
@@ -105,7 +180,27 @@ export default function LoginPage() {
               disabled={loading}
               type="submit"
             >
-              {loading ? "Entrando..." : "Entrar"}
+              {loading
+                ? isSignUp
+                  ? "Criando conta..."
+                  : "Entrando..."
+                : isSignUp
+                  ? "Criar conta"
+                  : "Entrar"}
+            </Button>
+            <Button
+              className="w-full"
+              disabled={loading}
+              onClick={() => {
+                setIsSignUp((current) => !current);
+                setErrorMessage(null);
+              }}
+              type="button"
+              variant="link"
+            >
+              {isSignUp
+                ? "Já possui uma conta? Entrar"
+                : "Não tem uma conta? Cadastre-se"}
             </Button>
           </form>
         </CardContent>
