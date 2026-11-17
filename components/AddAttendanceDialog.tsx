@@ -22,19 +22,69 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { createAttendance } from "@/app/attendances/actions";
+import { createSupportType, type SupportType } from "@/services/supportTypes";
 
 type BeneficiaryOption = { id: string; name: string };
 
 export function AddAttendanceDialog({
   beneficiaries,
+  supportTypes: initialSupportTypes,
 }: {
   beneficiaries: BeneficiaryOption[];
+  supportTypes: SupportType[];
 }) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [beneficiaryId, setBeneficiaryId] = useState<string | null>(null);
   const [type, setType] = useState<string | null>(null);
+  const [addedSupportTypes, setAddedSupportTypes] = useState<SupportType[]>([]);
+  const [showNewTypeForm, setShowNewTypeForm] = useState(false);
+  const [newTypeName, setNewTypeName] = useState("");
+  const [addingType, setAddingType] = useState(false);
   const router = useRouter();
+
+  const supportTypes = [
+    ...initialSupportTypes,
+    ...addedSupportTypes.filter(
+      ({ id }) => !initialSupportTypes.some((supportType) => supportType.id === id),
+    ),
+  ].sort((first, second) =>
+    first.name.localeCompare(second.name, "pt-BR"),
+  );
+
+  async function addSupportType() {
+    setAddingType(true);
+
+    try {
+      const result = await createSupportType(newTypeName);
+      if (!result.success || !result.data) {
+        toast.error("Não foi possível adicionar o tipo de apoio.", {
+          description: result.error,
+        });
+        return;
+      }
+
+      const createdType = result.data;
+      setAddedSupportTypes((current) => [
+        ...current.filter(({ id }) => id !== createdType.id),
+        createdType,
+      ]);
+      setType(createdType.name);
+      setNewTypeName("");
+      setShowNewTypeForm(false);
+      toast.success("Tipo de apoio adicionado.", {
+        description: `${createdType.name} foi selecionado.`,
+      });
+      router.refresh();
+    } catch (error) {
+      toast.error("Não foi possível adicionar o tipo de apoio.", {
+        description:
+          error instanceof Error ? error.message : "Tente novamente.",
+      });
+    } finally {
+      setAddingType(false);
+    }
+  }
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -88,6 +138,8 @@ export function AddAttendanceDialog({
         if (!nextOpen) {
           setBeneficiaryId(null);
           setType(null);
+          setShowNewTypeForm(false);
+          setNewTypeName("");
         }
       }}
     >
@@ -128,7 +180,43 @@ export function AddAttendanceDialog({
             </Select>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="type">Tipo de Apoio</Label>
+            <div className="flex items-center justify-between gap-2">
+              <Label htmlFor="type">Tipo de Apoio</Label>
+              <Button
+                className="h-auto px-1 py-0 text-xs"
+                onClick={() => setShowNewTypeForm((shown) => !shown)}
+                type="button"
+                variant="ghost"
+              >
+                + Novo tipo
+              </Button>
+            </div>
+            {showNewTypeForm && (
+              <div className="flex gap-2">
+                <Input
+                  aria-label="Nome do novo tipo de apoio"
+                  autoFocus
+                  className="border-zinc-200"
+                  onChange={(event) => setNewTypeName(event.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter") {
+                      event.preventDefault();
+                      void addSupportType();
+                    }
+                  }}
+                  placeholder="Nome do tipo"
+                  value={newTypeName}
+                />
+                <Button
+                  disabled={addingType}
+                  onClick={() => void addSupportType()}
+                  type="button"
+                  variant="outline"
+                >
+                  {addingType ? "Adicionando..." : "Adicionar"}
+                </Button>
+              </div>
+            )}
             <Select
               id="type"
               name="type"
@@ -142,10 +230,11 @@ export function AddAttendanceDialog({
                 <SelectValue placeholder="Selecione..." />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="Cesta Básica">Cesta Básica</SelectItem>
-                <SelectItem value="Kits de Higiene">Kits de Higiene</SelectItem>
-                <SelectItem value="Roupas/Cobertores">Roupas/Cobertores</SelectItem>
-                <SelectItem value="Outros">Outros</SelectItem>
+                {supportTypes.map((supportType) => (
+                  <SelectItem key={supportType.id} value={supportType.name}>
+                    {supportType.name}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>

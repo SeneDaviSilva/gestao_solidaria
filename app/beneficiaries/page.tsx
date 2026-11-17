@@ -16,12 +16,31 @@ import {
 import { AddBeneficiaryDialog } from "@/components/AddBeneficiaryDialog";
 import { TableFilters } from "@/components/ui/TableFilters";
 import { getBeneficiaries } from "@/utils/supabase/beneficiaries";
+import { getSupportTypes } from "@/services/supportTypes";
 
 type PageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 };
 
 export default function BeneficiariesPage({ searchParams }: PageProps) {
+  return (
+    <Suspense
+      fallback={
+        <Card>
+          <CardContent className="py-8 text-center text-zinc-500">
+            Carregando assistidos...
+          </CardContent>
+        </Card>
+      }
+    >
+      <BeneficiaryContent searchParams={searchParams} />
+    </Suspense>
+  );
+}
+
+async function BeneficiaryContent({ searchParams }: PageProps) {
+  const supportTypes = await getSupportTypes();
+
   return (
     <div className="max-w-5xl space-y-6">
       <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
@@ -31,7 +50,7 @@ export default function BeneficiariesPage({ searchParams }: PageProps) {
             Gerencie as famílias e indivíduos cadastrados na ONG.
           </p>
         </div>
-        <AddBeneficiaryDialog />
+        <AddBeneficiaryDialog supportTypes={supportTypes} />
       </div>
 
       <Suspense
@@ -65,38 +84,40 @@ async function BeneficiaryList({ searchParams }: PageProps) {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Nome</TableHead>
-                <TableHead>Contato</TableHead>
-                <TableHead>Categoria</TableHead>
-                <TableHead className="text-right">Data de Cadastro</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {beneficiaries.map((person) => (
-                <TableRow key={person.id}>
-                  <TableCell className="font-medium">{person.name}</TableCell>
-                  <TableCell>{person.contact || "—"}</TableCell>
-                  <TableCell>{person.category || "—"}</TableCell>
-                  <TableCell className="text-right">
-                    {new Date(person.created_at).toLocaleDateString("pt-BR")}
-                  </TableCell>
-                </TableRow>
-              ))}
-              {beneficiaries.length === 0 && (
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
                 <TableRow>
-                  <TableCell
-                    className="py-8 text-center text-zinc-500"
-                    colSpan={4}
-                  >
-                    Nenhum assistido encontrado.
-                  </TableCell>
+                  <TableHead>Nome</TableHead>
+                  <TableHead>Contato</TableHead>
+                  <TableHead>Categoria</TableHead>
+                  <TableHead className="text-right">Data de Cadastro</TableHead>
                 </TableRow>
-              )}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {beneficiaries.map((person) => (
+                  <TableRow key={person.id}>
+                    <TableCell className="font-medium">{person.name}</TableCell>
+                    <TableCell>{person.contact || "—"}</TableCell>
+                    <TableCell>{person.category || "—"}</TableCell>
+                    <TableCell className="text-right">
+                      {new Date(person.created_at).toLocaleDateString("pt-BR")}
+                    </TableCell>
+                  </TableRow>
+                ))}
+                {beneficiaries.length === 0 && (
+                  <TableRow>
+                    <TableCell
+                      className="py-8 text-center text-zinc-500"
+                      colSpan={4}
+                    >
+                      Nenhum assistido encontrado.
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </div>
         </CardContent>
       </Card>
     </>

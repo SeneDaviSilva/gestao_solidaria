@@ -79,35 +79,37 @@ async function DashboardContent() {
           <CardTitle className="text-lg font-medium">Últimos Atendimentos</CardTitle>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow className="border-zinc-200 hover:bg-transparent">
-                <TableHead className="font-medium">Assistido</TableHead>
-                <TableHead className="font-medium">Tipo de Apoio</TableHead>
-                <TableHead className="font-medium text-right">Data</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {recentAttendances?.map((attendance: RecentAttendance) => (
-                <TableRow className="border-zinc-100 transition-colors" key={attendance.id}>
-                  <TableCell className="text-zinc-900">
-                    {attendance.beneficiaries?.[0]?.name}
-                  </TableCell>
-                  <TableCell className="text-zinc-600">{attendance.type}</TableCell>
-                  <TableCell className="text-right text-zinc-500">
-                    {new Date(attendance.date).toLocaleDateString('pt-BR')}
-                  </TableCell>
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow className="border-zinc-200 hover:bg-transparent">
+                  <TableHead className="font-medium">Assistido</TableHead>
+                  <TableHead className="font-medium">Tipo de Apoio</TableHead>
+                  <TableHead className="font-medium text-right">Data</TableHead>
                 </TableRow>
-              ))}
-              {!recentAttendances?.length && (
-                <TableRow>
-                  <TableCell className="text-center text-zinc-500 py-6" colSpan={3}>
-                    Nenhum atendimento registrado.
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {recentAttendances?.map((attendance: RecentAttendance) => (
+                  <TableRow className="border-zinc-100 transition-colors" key={attendance.id}>
+                    <TableCell className="text-zinc-900">
+                      {attendance.beneficiaries?.[0]?.name}
+                    </TableCell>
+                    <TableCell className="text-zinc-600">{attendance.type}</TableCell>
+                    <TableCell className="text-right text-zinc-500">
+                      {new Date(attendance.date).toLocaleDateString('pt-BR')}
+                    </TableCell>
+                  </TableRow>
+                ))}
+                {!recentAttendances?.length && (
+                  <TableRow>
+                    <TableCell className="text-center text-zinc-500 py-6" colSpan={3}>
+                      Nenhum atendimento registrado.
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </div>
         </CardContent>
       </Card>
     </div>

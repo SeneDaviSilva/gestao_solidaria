@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/table";
 import { getAttendances } from "@/utils/supabase/attendances";
 import { getBeneficiaries } from "@/utils/supabase/beneficiaries";
+import { getSupportTypes } from "@/services/supportTypes";
 
 type PageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
@@ -44,9 +45,10 @@ async function AttendanceContent({ searchParams }: PageProps) {
     typeof resolvedParams.q === "string" ? resolvedParams.q : undefined;
   const type =
     typeof resolvedParams.type === "string" ? resolvedParams.type : undefined;
-  const [attendances, beneficiaries] = await Promise.all([
+  const [attendances, beneficiaries, supportTypes] = await Promise.all([
     getAttendances(query, type),
     getBeneficiaries(),
+    getSupportTypes(),
   ]);
   const mappedBeneficiaries = beneficiaries.map(({ id, name }) => ({
     id,
@@ -62,7 +64,10 @@ async function AttendanceContent({ searchParams }: PageProps) {
             Histórico de entregas e serviços prestados.
           </p>
         </div>
-        <AddAttendanceDialog beneficiaries={mappedBeneficiaries} />
+        <AddAttendanceDialog
+          beneficiaries={mappedBeneficiaries}
+          supportTypes={supportTypes}
+        />
       </div>
 
       <TableFilters showTypeFilter />
@@ -74,42 +79,44 @@ async function AttendanceContent({ searchParams }: PageProps) {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Assistido</TableHead>
-                <TableHead>Apoio Concedido</TableHead>
-                <TableHead>Detalhes</TableHead>
-                <TableHead className="text-right">Data</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {attendances.map((record) => (
-                <TableRow key={record.id}>
-                  <TableCell className="font-medium">
-                    {record.beneficiaries?.name || "Desconhecido"}
-                  </TableCell>
-                  <TableCell>{record.type}</TableCell>
-                  <TableCell className="max-w-xs truncate text-sm text-zinc-500">
-                    {record.description || "—"}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    {new Date(record.date).toLocaleDateString("pt-BR")}
-                  </TableCell>
-                </TableRow>
-              ))}
-              {attendances.length === 0 && (
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
                 <TableRow>
-                  <TableCell
-                    className="py-8 text-center text-zinc-500"
-                    colSpan={4}
-                  >
-                    Nenhum atendimento encontrado.
-                  </TableCell>
+                  <TableHead>Assistido</TableHead>
+                  <TableHead>Apoio Concedido</TableHead>
+                  <TableHead>Detalhes</TableHead>
+                  <TableHead className="text-right">Data</TableHead>
                 </TableRow>
-              )}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {attendances.map((record) => (
+                  <TableRow key={record.id}>
+                    <TableCell className="font-medium">
+                      {record.beneficiaries?.name || "Desconhecido"}
+                    </TableCell>
+                    <TableCell>{record.type}</TableCell>
+                    <TableCell className="max-w-xs truncate text-sm text-zinc-500">
+                      {record.description || "—"}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {new Date(record.date).toLocaleDateString("pt-BR")}
+                    </TableCell>
+                  </TableRow>
+                ))}
+                {attendances.length === 0 && (
+                  <TableRow>
+                    <TableCell
+                      className="py-8 text-center text-zinc-500"
+                      colSpan={4}
+                    >
+                      Nenhum atendimento encontrado.
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </div>
         </CardContent>
       </Card>
     </div>
