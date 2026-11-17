@@ -62,6 +62,7 @@ async function AttendanceContent({ searchParams }: PageProps) {
     "Apoio Concedido": record.type,
     Detalhes: record.description || "—",
     Data: new Date(record.date).toLocaleDateString("pt-BR"),
+    "Registrado por": record.created_by_name || "Sistema",
   }));
 
   return (
@@ -118,6 +119,9 @@ async function AttendanceContent({ searchParams }: PageProps) {
                     </TableCell>
                     <TableCell className="text-right">
                       {new Date(record.date).toLocaleDateString("pt-BR")}
+                      <div className="mt-0.5 text-xs text-zinc-400">
+                        por {record.created_by_name || "Sistema"}
+                      </div>
                     </TableCell>
                     <TableCell className="text-right">
                       <DeleteRecordButton

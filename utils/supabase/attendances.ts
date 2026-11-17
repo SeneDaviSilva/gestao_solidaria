@@ -7,25 +7,15 @@ export interface Attendance {
   description: string | null;
   date: string;
   created_at: string;
+  created_by_name: string | null;
   beneficiaries?: { name: string; };
-}
-
-export async function createAttendance(data: any): Promise<{ success: boolean; error?: string }> {
-  try {
-    const supabase = await createClient();
-    const { error } = await supabase.from('attendances').insert([data]);
-    if (error) throw error;
-    return { success: true };
-  } catch (error: any) {
-    return { success: false, error: error.message };
-  }
 }
 
 export async function getAttendances(searchQuery?: string, filterType?: string): Promise<Attendance[]> {
   const supabase = await createClient();
   let request = supabase
     .from('attendances')
-    .select(`id, beneficiary_id, type, description, date, created_at, beneficiaries!inner ( name )`)
+    .select(`id, beneficiary_id, type, description, date, created_at, created_by_name, beneficiaries!inner ( name )`)
     .order('date', { ascending: false });
     
   if (searchQuery) request = request.ilike('beneficiaries.name', `%${searchQuery}%`);

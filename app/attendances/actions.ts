@@ -2,8 +2,8 @@
 
 import {
   createAttendance as createAttendanceRecord,
-  type Attendance,
-} from "@/utils/supabase/attendances";
+} from "@/services/attendances";
+import type { Attendance } from "@/utils/supabase/attendances";
 
 type AttendanceInput = Pick<
   Attendance,

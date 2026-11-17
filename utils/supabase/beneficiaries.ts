@@ -6,22 +6,15 @@ export interface Beneficiary {
   contact: string | null;
   category: string | null;
   created_at: string;
-}
-
-export async function createBeneficiary(data: any): Promise<{ success: boolean; error?: string }> {
-  try {
-    const supabase = await createClient();
-    const { error } = await supabase.from('beneficiaries').insert([data]);
-    if (error) throw error;
-    return { success: true };
-  } catch (error: any) {
-    return { success: false, error: error.message };
-  }
+  created_by_name: string | null;
 }
 
 export async function getBeneficiaries(searchQuery?: string): Promise<Beneficiary[]> {
   const supabase = await createClient();
-  let request = supabase.from('beneficiaries').select('*').order('name', { ascending: true });
+  let request = supabase
+    .from('beneficiaries')
+    .select('id, name, contact, category, created_at, created_by_name')
+    .order('name', { ascending: true });
   
   if (searchQuery) request = request.ilike('name', `%${searchQuery}%`);
   

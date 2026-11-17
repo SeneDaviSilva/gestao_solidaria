@@ -54,6 +54,7 @@ async function BeneficiaryContent({ searchParams }: PageProps) {
     Contato: person.contact || "—",
     Categoria: person.category || "—",
     "Data de Cadastro": new Date(person.created_at).toLocaleDateString("pt-BR"),
+    "Registrado por": person.created_by_name || "Sistema",
   }));
 
   return (
@@ -113,6 +114,9 @@ function BeneficiaryList({
                   <TableCell>{person.category || "—"}</TableCell>
                   <TableCell className="text-right">
                     {new Date(person.created_at).toLocaleDateString("pt-BR")}
+                    <div className="mt-0.5 text-xs text-zinc-400">
+                      por {person.created_by_name || "Sistema"}
+                    </div>
                   </TableCell>
                   <TableCell className="text-right">
                     <DeleteRecordButton

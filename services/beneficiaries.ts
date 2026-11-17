@@ -2,23 +2,37 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/utils/supabase/server";
-import {
-  createBeneficiary as createBeneficiaryRecord,
-  type Beneficiary,
-} from "@/utils/supabase/beneficiaries";
+import type { Beneficiary } from "@/utils/supabase/beneficiaries";
 
 type BeneficiaryInput = Pick<Beneficiary, "name" | "contact" | "category">;
 
-export async function createBeneficiary(data: BeneficiaryInput) {
+export async function createBeneficiary(
+  data: BeneficiaryInput,
+): Promise<{ success: boolean; error?: string }> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  const createdByName =
+    user?.user_metadata?.full_name?.trim() ||
+    user?.email?.split("@")[0] ||
+    "Usuário";
   const contact =
     typeof data.contact === "string"
       ? data.contact.replace(/\D/g, "").slice(0, 11)
       : "";
 
-  return createBeneficiaryRecord({
+  const { error } = await supabase.from("beneficiaries").insert({
     ...data,
     contact: contact || null,
+    created_by_name: createdByName,
   });
+
+  if (error) {
+    return { success: false, error: error.message };
+  }
+
+  return { success: true };
 }
 
 export async function deleteBeneficiary(
