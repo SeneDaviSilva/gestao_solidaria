@@ -54,7 +54,7 @@ export function TableFilters({ showTypeFilter = false }: TableFiltersProps) {
           placeholder="Buscar por nome..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="pl-9 border-zinc-200 focus-visible:ring-zinc-900"
+          className="border-zinc-200 pl-9 focus-visible:ring-zinc-900 dark:border-zinc-700"
         />
       </div>
 
@@ -63,7 +63,7 @@ export function TableFilters({ showTypeFilter = false }: TableFiltersProps) {
           defaultValue={searchParams.get("type")?.toString() || "all"} 
           onValueChange={handleTypeChange}
         >
-          <SelectTrigger className="w-full sm:w-[200px] border-zinc-200 focus:ring-zinc-900">
+          <SelectTrigger className="w-full border-zinc-200 focus:ring-zinc-900 dark:border-zinc-700 sm:w-[200px]">
             <SelectValue placeholder="Todos os tipos" />
           </SelectTrigger>
           <SelectContent>

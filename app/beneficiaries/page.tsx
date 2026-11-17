@@ -16,10 +16,13 @@ import {
 import { AddBeneficiaryDialog } from "@/components/AddBeneficiaryDialog";
 import { DeleteRecordButton } from "@/components/DeleteRecordButton";
 import { ExportExcelButton } from "@/components/ExportExcelButton";
+import { SortControls } from "@/components/SortControls";
+import { SortableHeader } from "@/components/SortableHeader";
 import { TableFilters } from "@/components/ui/TableFilters";
-import { getBeneficiaries } from "@/utils/supabase/beneficiaries";
+import { getBeneficiaries } from "@/services/beneficiaries";
 import { getSupportTypes } from "@/services/supportTypes";
 import { deleteBeneficiary } from "@/services/beneficiaries";
+import { resolveSortBy, resolveSortOrder } from "@/utils/sorting";
 
 type PageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
@@ -48,7 +51,13 @@ async function BeneficiaryContent({ searchParams }: PageProps) {
   ]);
   const query =
     typeof resolvedParams.q === "string" ? resolvedParams.q : undefined;
-  const beneficiaries = await getBeneficiaries(query);
+  const sortBy = resolveSortBy(
+    typeof resolvedParams.sort === "string" ? resolvedParams.sort : null,
+  );
+  const sortOrder = resolveSortOrder(
+    typeof resolvedParams.order === "string" ? resolvedParams.order : null,
+  );
+  const beneficiaries = await getBeneficiaries(query, sortBy, sortOrder);
   const exportData = beneficiaries.map((person) => ({
     Nome: person.name,
     Contato: person.contact || "—",
@@ -62,7 +71,7 @@ async function BeneficiaryContent({ searchParams }: PageProps) {
       <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Assistidos</h1>
-          <p className="mt-1 text-sm text-zinc-500">
+          <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
             Gerencie as famílias e indivíduos cadastrados na ONG.
           </p>
         </div>
@@ -76,7 +85,17 @@ async function BeneficiaryContent({ searchParams }: PageProps) {
         </div>
       </div>
 
-      <TableFilters showTypeFilter={false} />
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <TableFilters showTypeFilter={false} />
+        <SortControls
+          options={[
+            { value: "created_at", label: "Ordem de Adição" },
+            { value: "name", label: "Nome" },
+            { value: "category", label: "Categoria" },
+            { value: "date", label: "Data" },
+          ]}
+        />
+      </div>
       <BeneficiaryList beneficiaries={beneficiaries} />
     </div>
   );
@@ -88,7 +107,7 @@ function BeneficiaryList({
   beneficiaries: Awaited<ReturnType<typeof getBeneficiaries>>;
 }) {
   return (
-    <Card className="border-zinc-200 shadow-sm">
+    <Card className="border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
       <CardHeader>
         <CardTitle className="text-lg font-medium">
           Lista de Assistidos
@@ -99,10 +118,16 @@ function BeneficiaryList({
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Nome</TableHead>
+                <SortableHeader sortBy="name">Nome</SortableHeader>
                 <TableHead>Contato</TableHead>
-                <TableHead>Categoria</TableHead>
-                <TableHead className="text-right">Data de Cadastro</TableHead>
+                <SortableHeader sortBy="category">Categoria</SortableHeader>
+                <SortableHeader
+                  className="text-right"
+                  sortBy="date"
+                  aliases={["created_at"]}
+                >
+                  Data de Cadastro
+                </SortableHeader>
                 <TableHead className="text-right">Ações</TableHead>
               </TableRow>
             </TableHeader>
@@ -110,11 +135,15 @@ function BeneficiaryList({
               {beneficiaries.map((person) => (
                 <TableRow key={person.id}>
                   <TableCell className="font-medium">{person.name}</TableCell>
-                  <TableCell>{person.contact || "—"}</TableCell>
-                  <TableCell>{person.category || "—"}</TableCell>
+                  <TableCell className="text-zinc-700 dark:text-zinc-200">
+                    {person.contact || "—"}
+                  </TableCell>
+                  <TableCell className="text-zinc-700 dark:text-zinc-200">
+                    {person.category || "—"}
+                  </TableCell>
                   <TableCell className="text-right">
                     {new Date(person.created_at).toLocaleDateString("pt-BR")}
-                    <div className="mt-0.5 text-xs text-zinc-400">
+                    <div className="mt-0.5 text-xs text-zinc-400 dark:text-zinc-500">
                       por {person.created_by_name || "Sistema"}
                     </div>
                   </TableCell>
@@ -130,7 +159,7 @@ function BeneficiaryList({
               {beneficiaries.length === 0 && (
                 <TableRow>
                   <TableCell
-                    className="py-8 text-center text-zinc-500"
+                    className="py-8 text-center text-zinc-500 dark:text-zinc-400"
                     colSpan={5}
                   >
                     Nenhum assistido encontrado.

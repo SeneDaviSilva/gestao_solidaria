@@ -49,24 +49,26 @@ async function DashboardContent() {
     <div className="space-y-8 max-w-5xl">
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">Visão Geral</h1>
-        <p className="text-sm text-zinc-500 mt-1">Acompanhe os indicadores da ONG.</p>
+        <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+          Acompanhe os indicadores da ONG.
+        </p>
       </div>
 
       <div className="grid gap-6 md:grid-cols-2">
-        <Card className="shadow-sm border-zinc-200">
+        <Card className="border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-zinc-600">Total de Assistidos</CardTitle>
-            <Users className="w-4 h-4 text-zinc-400"/>
+            <CardTitle className="text-sm font-medium text-zinc-600 dark:text-zinc-300">Total de Assistidos</CardTitle>
+            <Users className="h-4 w-4 text-zinc-400 dark:text-zinc-500"/>
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-semibold">{beneficiariesCount || 0}</div>
           </CardContent>
         </Card>
         
-        <Card className="shadow-sm border-zinc-200">
+        <Card className="border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-zinc-600">Atendimentos Realizados</CardTitle>
-            <HeartHandshake className="w-4 h-4 text-zinc-400"/>
+            <CardTitle className="text-sm font-medium text-zinc-600 dark:text-zinc-300">Atendimentos Realizados</CardTitle>
+            <HeartHandshake className="h-4 w-4 text-zinc-400 dark:text-zinc-500"/>
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-semibold">{attendancesCount || 0}</div>
@@ -74,7 +76,7 @@ async function DashboardContent() {
         </Card>
       </div>
 
-      <Card className="shadow-sm border-zinc-200">
+      <Card className="border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
         <CardHeader>
           <CardTitle className="text-lg font-medium">Últimos Atendimentos</CardTitle>
         </CardHeader>
@@ -82,7 +84,7 @@ async function DashboardContent() {
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
-                <TableRow className="border-zinc-200 hover:bg-transparent">
+                <TableRow className="border-zinc-200 hover:bg-transparent dark:border-zinc-800">
                   <TableHead className="font-medium">Assistido</TableHead>
                   <TableHead className="font-medium">Tipo de Apoio</TableHead>
                   <TableHead className="font-medium text-right">Data</TableHead>
@@ -91,18 +93,18 @@ async function DashboardContent() {
               <TableBody>
                 {recentAttendances?.map((attendance: RecentAttendance) => (
                   <TableRow className="border-zinc-100 transition-colors" key={attendance.id}>
-                    <TableCell className="text-zinc-900">
+                    <TableCell className="text-zinc-900 dark:text-zinc-100">
                       {attendance.beneficiaries?.[0]?.name}
                     </TableCell>
-                    <TableCell className="text-zinc-600">{attendance.type}</TableCell>
-                    <TableCell className="text-right text-zinc-500">
+                    <TableCell className="text-zinc-600 dark:text-zinc-300">{attendance.type}</TableCell>
+                    <TableCell className="text-right text-zinc-500 dark:text-zinc-400">
                       {new Date(attendance.date).toLocaleDateString('pt-BR')}
                     </TableCell>
                   </TableRow>
                 ))}
                 {!recentAttendances?.length && (
                   <TableRow>
-                    <TableCell className="text-center text-zinc-500 py-6" colSpan={3}>
+                    <TableCell className="py-6 text-center text-zinc-500 dark:text-zinc-400" colSpan={3}>
                       Nenhum atendimento registrado.
                     </TableCell>
                   </TableRow>

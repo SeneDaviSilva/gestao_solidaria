@@ -121,12 +121,12 @@ export default function LoginPage() {
 
   return (
     <main className="flex min-h-screen items-center justify-center p-4">
-      <Card className="w-full max-w-sm border-zinc-200 shadow-sm">
+      <Card className="w-full max-w-sm border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
         <CardHeader>
           <CardTitle className="text-xl">
             {isSignUp ? "Criar nova conta" : "Entrar no sistema"}
           </CardTitle>
-          <p className="text-sm text-zinc-500">
+          <p className="text-sm text-zinc-500 dark:text-zinc-400">
             {isSignUp
               ? "Preencha seus dados para criar uma conta."
               : "Gestão Solidária"}
@@ -139,7 +139,7 @@ export default function LoginPage() {
                 <Label htmlFor="name">Nome completo</Label>
                 <Input
                   autoComplete="name"
-                  className="border-zinc-200"
+                  className="border-zinc-200 dark:border-zinc-700"
                   id="name"
                   name="name"
                   required
@@ -151,7 +151,7 @@ export default function LoginPage() {
               <Label htmlFor="email">E-mail</Label>
               <Input
                 autoComplete="email"
-                className="border-zinc-200"
+                className="border-zinc-200 dark:border-zinc-700"
                 id="email"
                 name="email"
                 required
@@ -162,7 +162,7 @@ export default function LoginPage() {
               <Label htmlFor="password">Senha</Label>
               <Input
                 autoComplete="current-password"
-                className="border-zinc-200"
+                className="border-zinc-200 dark:border-zinc-700"
                 id="password"
                 name="password"
                 minLength={isSignUp ? 6 : undefined}
@@ -176,7 +176,7 @@ export default function LoginPage() {
               </p>
             )}
             <Button
-              className="w-full bg-zinc-900 text-white hover:bg-zinc-800"
+              className="w-full bg-zinc-900 text-white hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-300"
               disabled={loading}
               type="submit"
             >

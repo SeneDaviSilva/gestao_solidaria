@@ -144,13 +144,13 @@ export function AddBeneficiaryDialog({
     >
       <DialogTrigger
         render={
-          <Button className="bg-zinc-900 text-white transition-colors hover:bg-zinc-800">
+          <Button className="bg-zinc-900 text-white transition-colors hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-300">
             <Plus className="mr-2 h-4 w-4" />
             Novo Cadastro
           </Button>
         }
       />
-      <DialogContent className="border-zinc-200 bg-white sm:max-w-[425px]">
+      <DialogContent className="border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900 sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Cadastrar Assistido</DialogTitle>
         </DialogHeader>
@@ -158,7 +158,7 @@ export function AddBeneficiaryDialog({
           <div className="space-y-2">
             <Label htmlFor="name">Nome completo</Label>
             <Input
-              className="border-zinc-200"
+              className="border-zinc-200 dark:border-zinc-700"
               id="name"
               name="name"
               required
@@ -167,7 +167,7 @@ export function AddBeneficiaryDialog({
           <div className="space-y-2">
             <Label htmlFor="contact">Contato (WhatsApp)</Label>
             <Input
-              className="border-zinc-200"
+              className="border-zinc-200 dark:border-zinc-700"
               id="contact"
               inputMode="numeric"
               maxLength={11}
@@ -210,7 +210,7 @@ export function AddBeneficiaryDialog({
                 <Input
                   aria-label="Nome do novo tipo de apoio"
                   autoFocus
-                  className="border-zinc-200"
+                  className="border-zinc-200 dark:border-zinc-700"
                   onChange={(event) => setNewTypeName(event.target.value)}
                   onKeyDown={(event) => {
                     if (event.key === "Enter") {
@@ -240,7 +240,7 @@ export function AddBeneficiaryDialog({
                 setCategory(typeof value === "string" ? value : null)
               }
             >
-              <SelectTrigger className="w-full border-zinc-200">
+              <SelectTrigger className="w-full border-zinc-200 dark:border-zinc-700">
                 <SelectValue placeholder="Selecione..." />
               </SelectTrigger>
               <SelectContent>
@@ -254,7 +254,7 @@ export function AddBeneficiaryDialog({
           </div>
           <div className="flex justify-end pt-4">
             <Button
-              className="bg-zinc-900 text-white hover:bg-zinc-800"
+              className="bg-zinc-900 text-white hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-300"
               disabled={loading}
               type="submit"
             >
