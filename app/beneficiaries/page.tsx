@@ -14,6 +14,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { AddBeneficiaryDialog } from "@/components/AddBeneficiaryDialog";
+import { BulkBeneficiariesDialog } from "@/components/BulkBeneficiariesDialog";
 import { DeleteRecordButton } from "@/components/DeleteRecordButton";
 import { ExportExcelButton } from "@/components/ExportExcelButton";
 import { SortControls } from "@/components/SortControls";
@@ -59,7 +60,10 @@ async function BeneficiaryContent({ searchParams }: PageProps) {
   const sortOrder = resolveSortOrder(
     typeof resolvedParams.order === "string" ? resolvedParams.order : null,
   );
-  const beneficiaries = await getBeneficiaries(query, sortBy, sortOrder);
+  const [beneficiaries, allBeneficiaries] = await Promise.all([
+    getBeneficiaries(query, sortBy, sortOrder),
+    getBeneficiaries(),
+  ]);
   const exportData = beneficiaries.map((person) => ({
     Nome: person.name,
     Contato: person.contact || "—",
@@ -90,6 +94,10 @@ async function BeneficiaryContent({ searchParams }: PageProps) {
             fileName="assistidos"
             orgSettings={orgSettings}
             sheetName="Assistidos"
+          />
+          <BulkBeneficiariesDialog
+            beneficiaries={allBeneficiaries}
+            supportTypes={supportTypes}
           />
           <AddBeneficiaryDialog supportTypes={supportTypes} />
         </div>

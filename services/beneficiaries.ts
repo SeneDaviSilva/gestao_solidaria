@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/utils/supabase/server";
 import type { Beneficiary } from "@/utils/supabase/beneficiaries";
+import { normalizeText } from "@/utils/normalizeText";
 import type { SortBy, SortOrder } from "@/utils/sorting";
 
 type BeneficiaryInput = Pick<Beneficiary, "name" | "contact" | "category">;
@@ -79,6 +80,112 @@ export async function createBeneficiary(
   }
 
   return { success: true };
+}
+
+export async function createBeneficiariesBulk(
+  items: { name: string; contact?: string; category: string }[],
+): Promise<{ success: boolean; count: number; error?: string }> {
+  if (!Array.isArray(items) || items.length === 0) {
+    return {
+      success: false,
+      count: 0,
+      error: "Nenhum assistido foi informado para importação.",
+    };
+  }
+
+  const candidates = items.filter(
+    (item) =>
+      item &&
+      typeof item.name === "string" &&
+      item.name.trim().length > 0,
+  );
+  if (candidates.length === 0) {
+    return {
+      success: false,
+      count: 0,
+      error: "Nenhuma linha contém um nome válido.",
+    };
+  }
+
+  const supabase = await createClient();
+  const { data: supportTypeRows, error: supportTypesError } = await supabase
+    .from("support_types")
+    .select("name");
+
+  if (supportTypesError) {
+    return {
+      success: false,
+      count: 0,
+      error: `Não foi possível validar as categorias: ${supportTypesError.message}`,
+    };
+  }
+
+  const supportTypeNames = (supportTypeRows ?? [])
+    .map(({ name }) => name)
+    .filter(
+      (name): name is string =>
+        typeof name === "string" && name.trim().length > 0,
+    );
+  const supportTypesByName = new Map(
+    supportTypeNames.map((name) => [normalizeText(name), name]),
+  );
+  const fallbackCategory =
+    supportTypesByName.get("geral") ?? supportTypesByName.get("outros");
+  const rows = candidates.flatMap((item) => {
+    const category =
+      typeof item.category === "string"
+        ? supportTypesByName.get(normalizeText(item.category)) ??
+          fallbackCategory
+        : fallbackCategory;
+
+    if (!category) {
+      return [];
+    }
+
+    const contact =
+      typeof item.contact === "string"
+        ? item.contact.replace(/\D/g, "").slice(0, 11)
+        : "";
+
+    return [
+      {
+        name: item.name.trim(),
+        contact: contact || null,
+        category,
+      },
+    ];
+  });
+
+  if (rows.length === 0) {
+    return {
+      success: false,
+      count: 0,
+      error:
+        'Não há uma categoria válida. Cadastre "Geral" ou "Outros" em Tipos de Apoio.',
+    };
+  }
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  const createdByName =
+    user?.user_metadata?.full_name?.trim() ||
+    user?.email?.split("@")[0] ||
+    "Usuário";
+  const { error } = await supabase.from("beneficiaries").insert(
+    rows.map((row) => ({
+      ...row,
+      created_by_name: createdByName,
+    })),
+  );
+
+  if (error) {
+    return { success: false, count: 0, error: error.message };
+  }
+
+  revalidatePath("/beneficiaries");
+  revalidatePath("/");
+  return { success: true, count: rows.length };
 }
 
 export async function deleteBeneficiary(

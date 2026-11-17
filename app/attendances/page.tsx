@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import { AddAttendanceDialog } from "@/components/AddAttendanceDialog";
+import { BulkAttendancesDialog } from "@/components/BulkAttendancesDialog";
 import { DeleteRecordButton } from "@/components/DeleteRecordButton";
 import { ExportExcelButton } from "@/components/ExportExcelButton";
 import { SortControls } from "@/components/SortControls";
@@ -101,6 +102,10 @@ async function AttendanceContent({ searchParams }: PageProps) {
             fileName="atendimentos"
             orgSettings={orgSettings}
             sheetName="Atendimentos"
+          />
+          <BulkAttendancesDialog
+            beneficiaries={mappedBeneficiaries}
+            supportTypes={supportTypes}
           />
           <AddAttendanceDialog
             beneficiaries={mappedBeneficiaries}
