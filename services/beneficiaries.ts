@@ -2,6 +2,24 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/utils/supabase/server";
+import {
+  createBeneficiary as createBeneficiaryRecord,
+  type Beneficiary,
+} from "@/utils/supabase/beneficiaries";
+
+type BeneficiaryInput = Pick<Beneficiary, "name" | "contact" | "category">;
+
+export async function createBeneficiary(data: BeneficiaryInput) {
+  const contact =
+    typeof data.contact === "string"
+      ? data.contact.replace(/\D/g, "").slice(0, 11)
+      : "";
+
+  return createBeneficiaryRecord({
+    ...data,
+    contact: contact || null,
+  });
+}
 
 export async function deleteBeneficiary(
   id: string,

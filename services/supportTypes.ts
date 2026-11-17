@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/utils/supabase/server";
+import { sortSupportTypes } from "@/utils/supportTypes";
 
 export type SupportType = {
   id: string;
@@ -19,7 +20,7 @@ export async function getSupportTypes(): Promise<SupportType[]> {
     throw new Error(`Não foi possível carregar os tipos de apoio: ${error.message}`);
   }
 
-  return (data ?? []) as SupportType[];
+  return sortSupportTypes((data ?? []) as SupportType[]);
 }
 
 export async function createSupportType(

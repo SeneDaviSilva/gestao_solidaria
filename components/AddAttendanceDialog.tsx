@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/select";
 import { createAttendance } from "@/app/attendances/actions";
 import { createSupportType, type SupportType } from "@/services/supportTypes";
+import { sortSupportTypes } from "@/utils/supportTypes";
 
 type BeneficiaryOption = { id: string; name: string };
 
@@ -43,14 +44,12 @@ export function AddAttendanceDialog({
   const [addingType, setAddingType] = useState(false);
   const router = useRouter();
 
-  const supportTypes = [
+  const supportTypes = sortSupportTypes([
     ...initialSupportTypes,
     ...addedSupportTypes.filter(
       ({ id }) => !initialSupportTypes.some((supportType) => supportType.id === id),
     ),
-  ].sort((first, second) =>
-    first.name.localeCompare(second.name, "pt-BR"),
-  );
+  ]);
 
   async function addSupportType() {
     setAddingType(true);

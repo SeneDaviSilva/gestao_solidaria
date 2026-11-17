@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/select";
 import { createBeneficiary } from "@/app/beneficiaries/actions";
 import { createSupportType, type SupportType } from "@/services/supportTypes";
+import { sortSupportTypes } from "@/utils/supportTypes";
 
 export function AddBeneficiaryDialog({
   supportTypes: initialSupportTypes,
@@ -39,14 +40,12 @@ export function AddBeneficiaryDialog({
   const formRef = useRef<HTMLFormElement>(null);
   const router = useRouter();
 
-  const supportTypes = [
+  const supportTypes = sortSupportTypes([
     ...initialSupportTypes,
     ...addedSupportTypes.filter(
       ({ id }) => !initialSupportTypes.some((supportType) => supportType.id === id),
     ),
-  ].sort((first, second) =>
-    first.name.localeCompare(second.name, "pt-BR"),
-  );
+  ]);
 
   async function addSupportType() {
     setAddingType(true);
@@ -170,7 +169,28 @@ export function AddBeneficiaryDialog({
             <Input
               className="border-zinc-200"
               id="contact"
+              inputMode="numeric"
+              maxLength={11}
               name="contact"
+              onChange={(event) => {
+                event.currentTarget.value = event.currentTarget.value
+                  .replace(/\D/g, "")
+                  .slice(0, 11);
+              }}
+              onPaste={(event) => {
+                event.preventDefault();
+                const input = event.currentTarget;
+                const start = input.selectionStart ?? input.value.length;
+                const end = input.selectionEnd ?? input.value.length;
+                const pastedText = event.clipboardData
+                  .getData("text")
+                  .replace(/\D/g, "");
+                input.value = `${input.value.slice(0, start)}${pastedText}${input.value.slice(end)}`
+                  .replace(/\D/g, "")
+                  .slice(0, 11);
+              }}
+              placeholder="Ex: 11999999999"
+              type="tel"
             />
           </div>
           <div className="space-y-2">
