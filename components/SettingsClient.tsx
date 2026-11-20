@@ -6,7 +6,6 @@ import {
   useSyncExternalStore,
   type FormEvent,
 } from "react";
-import Link from "next/link";
 import { useTheme } from "next-themes";
 import {
   Check,
@@ -76,50 +75,9 @@ const themeChoices = [
   { value: "system", label: "Sistema", Icon: Monitor },
 ] as const;
 
-const helpItems = [
-  {
-    title: "Dashboard",
-    description: "Acompanhe os totais de assistidos e atendimentos recentes.",
-    href: "/",
-  },
-  {
-    title: "Assistidos",
-    description:
-      "Cadastre pessoas, consulte seus contatos e acompanhe a categoria de apoio.",
-    href: "/beneficiaries",
-  },
-  {
-    title: "Atendimentos",
-    description:
-      "Registre entregas e serviços, filtre o histórico e consulte os detalhes.",
-    href: "/attendances",
-  },
-  {
-    title: "Tipos de Apoio",
-    description:
-      "Adicione, renomeie ou remova tipos nesta página. “Outros” fica protegido contra exclusão.",
-  },
-  {
-    title: "Exportação para Excel",
-    description:
-      "Exporte os registros exibidos com o nome, CNPJ e cidade da ONG no cabeçalho.",
-  },
-  {
-    title: "Backup Geral",
-    description:
-      "Baixe todos os assistidos e atendimentos em um arquivo .xlsx com duas abas.",
-  },
-  {
-    title: "Modo Compacto",
-    description:
-      "Ative a opção em Aparência para reduzir o espaçamento das tabelas neste navegador.",
-  },
-];
-
 const supportContacts = [
   { label: "E-mail", value: "davisenepj888@gmail.com" },
   { label: "WhatsApp", value: "11 94102-8828" },
-  
 ];
 
 export function SettingsClient({
@@ -819,34 +777,86 @@ export function SettingsClient({
           <CardTitle>Ajuda e Suporte</CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
-          <ul className="space-y-4">
-            {helpItems.map(({ title, description, href }) => (
-              <li key={title}>
-                <h3 className="text-sm font-medium">{title}</h3>
-                <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-                  {description}
-                  {href && (
-                    <>
-                      {" "}
-                      <Link
-                        className="font-medium text-zinc-900 underline underline-offset-4 dark:text-zinc-100"
-                        href={href}
-                      >
-                        Abrir módulo
-                      </Link>
-                    </>
-                  )}
-                </p>
+          <div className="rounded-md border border-amber-300 bg-amber-50 p-4 dark:border-amber-800 dark:bg-amber-950/30">
+            <h3 className="font-semibold text-amber-950 dark:text-amber-100">
+              Regra de Ouro
+            </h3>
+            <p className="mt-2 text-sm text-amber-900 dark:text-amber-100">
+              Cada assistido deve ser cadastrado apenas UMA vez na aba
+              &quot;Assistidos&quot;. Todas as entregas futuras, inclusive de
+              meses depois, devem ser lançadas diretamente na aba
+              &quot;Atendimentos&quot;, selecionando o nome da pessoa já
+              cadastrada.
+            </p>
+          </div>
+
+          <div className="space-y-3">
+            <h3 className="text-base font-semibold">
+              1. Assistidos (Ficha Cadastral)
+            </h3>
+            <ul className="list-disc space-y-2 pl-5 text-sm text-zinc-600 dark:text-zinc-400">
+              <li>
+                Em <strong>Novo Cadastro</strong>, informe o Nome, o WhatsApp
+                com 11 dígitos numéricos e a Categoria.
               </li>
-            ))}
-          </ul>
+              <li>
+                Use <strong>Importar em Massa</strong> com o formato
+                <code className="mx-1 rounded bg-zinc-100 px-1.5 py-0.5 dark:bg-zinc-800">
+                  Nome | WhatsApp | Categoria
+                </code>
+                .
+              </li>
+              <li>
+                Atenção: excluir um assistido também apaga os atendimentos
+                vinculados a ele.
+              </li>
+            </ul>
+          </div>
+
+          <div className="space-y-3">
+            <h3 className="text-base font-semibold">
+              2. Atendimentos (Histórico de Entregas)
+            </h3>
+            <ul className="list-disc space-y-2 pl-5 text-sm text-zinc-600 dark:text-zinc-400">
+              <li>
+                Selecione um assistido já cadastrado para registrar a entrega.
+              </li>
+              <li>
+                Crie categorias rapidamente com o botão{" "}
+                <strong>+ Novo tipo</strong>. O tipo &quot;Outros&quot;
+                permanece por último na lista.
+              </li>
+              <li>
+                Use <strong>Importar em Massa</strong> com o formato
+                <code className="mx-1 rounded bg-zinc-100 px-1.5 py-0.5 dark:bg-zinc-800">
+                  Nome do Assistido | Tipo de Apoio | Observação
+                </code>
+                .
+              </li>
+            </ul>
+          </div>
+
+          <div className="space-y-3">
+            <h3 className="text-base font-semibold">
+              3. Consultas, Auditoria e Planilhas
+            </h3>
+            <ul className="list-disc space-y-2 pl-5 text-sm text-zinc-600 dark:text-zinc-400">
+              <li>
+                O sistema registra automaticamente quem efetuou cada lançamento.
+              </li>
+              <li>
+                Clique nos cabeçalhos das tabelas para ordenar os registros.
+              </li>
+              <li>
+                Exporte os dados em <code>.xlsx</code>, individualmente ou pelo
+                Backup Completo.
+              </li>
+            </ul>
+          </div>
 
           <div className="space-y-4 border-t border-zinc-200 pt-5 dark:border-zinc-800">
             <div>
               <h3 className="font-medium">Contato para Dúvidas / Suporte Técnico</h3>
-              <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-                Substitua os campos entre colchetes pelos seus dados de contato.
-              </p>
             </div>
             <div className="space-y-2">
               {supportContacts.map(({ label, value }) => (
