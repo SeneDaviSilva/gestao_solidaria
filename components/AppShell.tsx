@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
   HeartHandshake,
+  History,
   LayoutDashboard,
   Menu,
   Settings,
@@ -20,6 +21,7 @@ const navigation = [
   { href: "/", label: "Dashboard", Icon: LayoutDashboard },
   { href: "/beneficiaries", label: "Assistidos", Icon: Users },
   { href: "/attendances", label: "Atendimentos", Icon: HeartHandshake },
+  { href: "/history", label: "Histórico", Icon: History },
 ];
 
 export function AppShell({ children }: { children: React.ReactNode }) {

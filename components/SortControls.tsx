@@ -27,8 +27,13 @@ export function SortControls({ options }: { options: SortOption[] }) {
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
+  const sortParam = searchParams.get("sort");
   const sortBy = resolveSortBy(searchParams.get("sort"));
   const sortOrder = resolveSortOrder(searchParams.get("order"));
+  const currentSort =
+    sortParam && options.some((option) => option.value === sortParam)
+      ? sortParam
+      : undefined;
 
   function updateParams(nextSortBy: SortBy, nextSortOrder: SortOrder) {
     const params = new URLSearchParams(searchParams.toString());
@@ -46,7 +51,7 @@ export function SortControls({ options }: { options: SortOption[] }) {
         Ordenar por
       </label>
       <Select
-        value={sortBy}
+        value={currentSort}
         onValueChange={(value) => {
           if (typeof value !== "string") {
             return;
@@ -59,7 +64,7 @@ export function SortControls({ options }: { options: SortOption[] }) {
           className="w-full min-w-40 border-zinc-200 dark:border-zinc-700 sm:w-48"
           id="sort-by"
         >
-          <SelectValue />
+          <SelectValue placeholder="Ordenar por" />
         </SelectTrigger>
         <SelectContent>
           {options.map((option) => (
