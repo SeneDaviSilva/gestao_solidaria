@@ -117,9 +117,9 @@ const helpItems = [
 ];
 
 const supportContacts = [
-  { label: "Nome ou contato", value: "Davi Silva Sene" },
-  { label: "WhatsApp", value: "11 94102-8828" },
   { label: "E-mail", value: "davisenepj888@gmail.com" },
+  { label: "WhatsApp", value: "11 94102-8828" },
+  
 ];
 
 export function SettingsClient({
