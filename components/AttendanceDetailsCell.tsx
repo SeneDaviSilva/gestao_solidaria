@@ -17,6 +17,7 @@ type AttendanceDetailsCellProps = {
   type: string;
   date: string;
   createdByName?: string | null;
+  alwaysShowDetailsButton?: boolean;
 };
 
 export function AttendanceDetailsCell({
@@ -25,6 +26,7 @@ export function AttendanceDetailsCell({
   type,
   date,
   createdByName,
+  alwaysShowDetailsButton = false,
 }: AttendanceDetailsCellProps) {
   const [open, setOpen] = useState(false);
   const text = description?.trim();
@@ -34,7 +36,8 @@ export function AttendanceDetailsCell({
   }
 
   const newlineCount = (text.match(/\n/g) ?? []).length;
-  const showDetailsButton = text.length > 90 || newlineCount > 2;
+  const showDetailsButton =
+    alwaysShowDetailsButton || text.length > 90 || newlineCount > 2;
 
   return (
     <div className="space-y-2">

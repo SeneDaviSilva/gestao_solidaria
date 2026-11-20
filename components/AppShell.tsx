@@ -9,6 +9,7 @@ import {
   LayoutDashboard,
   Menu,
   Settings,
+  Trash2,
   UserCircle,
   Users,
   X,
@@ -115,6 +116,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               <span className="truncate">{currentUserLabel}</span>
             </div>
           )}
+          <TrashLink active={pathname === "/trash"} />
           <SettingsLink active={pathname === "/settings"} />
           <LogoutButton />
         </div>
@@ -167,6 +169,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   <span className="truncate">{currentUserLabel}</span>
                 </div>
               )}
+              <TrashLink
+                active={pathname === "/trash"}
+                onClick={() => setMenuOpen(false)}
+              />
               <SettingsLink
                 active={pathname === "/settings"}
                 onClick={() => setMenuOpen(false)}
@@ -181,6 +187,29 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         {children}
       </main>
     </div>
+  );
+}
+
+function TrashLink({
+  active,
+  onClick,
+}: {
+  active: boolean;
+  onClick?: () => void;
+}) {
+  return (
+    <Link
+      className={`flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition-colors ${
+        active
+          ? "bg-zinc-100 text-zinc-900 dark:bg-zinc-800 dark:text-white"
+          : "text-zinc-600 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800"
+      }`}
+      href="/trash"
+      onClick={onClick}
+    >
+      <Trash2 className="h-4 w-4" />
+      Lixeira
+    </Link>
   );
 }
 

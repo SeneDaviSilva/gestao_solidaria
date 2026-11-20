@@ -16,7 +16,8 @@ export async function getBeneficiaries(
   const supabase = await createClient();
   let request = supabase
     .from("beneficiaries")
-    .select("id, name, contact, category, created_at, created_by_name");
+    .select("id, name, contact, category, created_at, created_by_name")
+    .is("deleted_at", null);
 
   if (searchQuery) {
     request = request.ilike("name", `%${searchQuery}%`);
@@ -110,7 +111,8 @@ export async function createBeneficiariesBulk(
   const supabase = await createClient();
   const { data: supportTypeRows, error: supportTypesError } = await supabase
     .from("support_types")
-    .select("name");
+    .select("name")
+    .is("deleted_at", null);
 
   if (supportTypesError) {
     return {
@@ -196,17 +198,31 @@ export async function deleteBeneficiary(
   }
 
   const supabase = await createClient();
-  const { error } = await supabase
+  const deletedAt = new Date().toISOString();
+  const { error: beneficiaryError } = await supabase
     .from("beneficiaries")
-    .delete()
-    .eq("id", id);
+    .update({ deleted_at: deletedAt })
+    .eq("id", id)
+    .is("deleted_at", null);
 
-  if (error) {
+  if (beneficiaryError) {
+    return { success: false };
+  }
+
+  const { error: attendanceError } = await supabase
+    .from("attendances")
+    .update({ deleted_at: deletedAt })
+    .eq("beneficiary_id", id)
+    .is("deleted_at", null);
+
+  if (attendanceError) {
     return { success: false };
   }
 
   revalidatePath("/beneficiaries");
   revalidatePath("/attendances");
+  revalidatePath("/history");
   revalidatePath("/");
+  revalidatePath("/trash");
   return { success: true };
 }

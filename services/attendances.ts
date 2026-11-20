@@ -21,8 +21,9 @@ export async function getAttendances(
   let request = supabase
     .from("attendances")
     .select(
-      "id, beneficiary_id, type, description, date, created_at, created_by_name, beneficiaries!inner ( name )",
-    );
+      "id, beneficiary_id, type, description, date, created_at, created_by_name, beneficiaries ( name )",
+    )
+    .is("deleted_at", null);
 
   if (searchQuery) {
     request = request.ilike("beneficiaries.name", `%${searchQuery}%`);
@@ -138,8 +139,15 @@ export async function createAttendancesBulk(
 
   const supabase = await createClient();
   const [beneficiaryResult, supportTypeResult] = await Promise.all([
-    supabase.from("beneficiaries").select("id").in("id", beneficiaryIds),
-    supabase.from("support_types").select("name"),
+    supabase
+      .from("beneficiaries")
+      .select("id")
+      .in("id", beneficiaryIds)
+      .is("deleted_at", null),
+    supabase
+      .from("support_types")
+      .select("name")
+      .is("deleted_at", null),
   ]);
 
   if (beneficiaryResult.error) {
@@ -219,7 +227,9 @@ export async function createAttendancesBulk(
   }
 
   revalidatePath("/attendances");
+  revalidatePath("/history");
   revalidatePath("/");
+  revalidatePath("/trash");
   return { success: true, count: rows.length };
 }
 
@@ -231,13 +241,19 @@ export async function deleteAttendance(
   }
 
   const supabase = await createClient();
-  const { error } = await supabase.from("attendances").delete().eq("id", id);
+  const { error } = await supabase
+    .from("attendances")
+    .update({ deleted_at: new Date().toISOString() })
+    .eq("id", id)
+    .is("deleted_at", null);
 
   if (error) {
     return { success: false };
   }
 
   revalidatePath("/attendances");
+  revalidatePath("/history");
   revalidatePath("/");
+  revalidatePath("/trash");
   return { success: true };
 }

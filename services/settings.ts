@@ -70,10 +70,12 @@ export async function getFullBackupData(): Promise<{
     supabase
       .from("beneficiaries")
       .select("*")
+      .is("deleted_at", null)
       .order("created_at", { ascending: false }),
     supabase
       .from("attendances")
       .select("*, beneficiaries(name)")
+      .is("deleted_at", null)
       .order("date", { ascending: false }),
     getOrganizationSettings(),
   ]);

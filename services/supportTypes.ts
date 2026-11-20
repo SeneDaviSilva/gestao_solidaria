@@ -13,6 +13,9 @@ function revalidateSupportTypePaths() {
   revalidatePath("/settings");
   revalidatePath("/beneficiaries");
   revalidatePath("/attendances");
+  revalidatePath("/history");
+  revalidatePath("/");
+  revalidatePath("/trash");
 }
 
 export async function getSupportTypes(): Promise<SupportType[]> {
@@ -20,6 +23,7 @@ export async function getSupportTypes(): Promise<SupportType[]> {
   const { data, error } = await supabase
     .from("support_types")
     .select("id, name")
+    .is("deleted_at", null)
     .order("name", { ascending: true });
 
   if (error) {
@@ -143,8 +147,9 @@ export async function deleteSupportType(
 
   const { error } = await supabase
     .from("support_types")
-    .delete()
-    .eq("id", trimmedId);
+    .update({ deleted_at: new Date().toISOString() })
+    .eq("id", trimmedId)
+    .is("deleted_at", null);
 
   if (error) {
     return { success: false, error: error.message };
