@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import { AddAttendanceDialog } from "@/components/AddAttendanceDialog";
+import { AttendanceDetailsCell } from "@/components/AttendanceDetailsCell";
 import { BulkAttendancesDialog } from "@/components/BulkAttendancesDialog";
 import { DeleteRecordButton } from "@/components/DeleteRecordButton";
 import { ExportExcelButton } from "@/components/ExportExcelButton";
@@ -155,8 +156,16 @@ async function AttendanceContent({ searchParams }: PageProps) {
                       {record.beneficiaries?.name || "Desconhecido"}
                     </TableCell>
                     <TableCell>{record.type}</TableCell>
-                    <TableCell className="max-w-xs truncate text-sm text-zinc-500 dark:text-zinc-400">
-                      {record.description || "—"}
+                    <TableCell>
+                      <AttendanceDetailsCell
+                        beneficiaryName={
+                          record.beneficiaries?.name || "Desconhecido"
+                        }
+                        createdByName={record.created_by_name}
+                        date={record.date}
+                        description={record.description}
+                        type={record.type}
+                      />
                     </TableCell>
                     <TableCell className="text-right">
                       {new Date(record.date).toLocaleDateString("pt-BR")}

@@ -1,17 +1,20 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   HeartHandshake,
   LayoutDashboard,
   Menu,
   Settings,
+  UserCircle,
   Users,
   X,
 } from "lucide-react";
+import { toast } from "sonner";
 import { LogoutButton } from "@/components/LogoutButton";
+import { createClient } from "@/utils/supabase/client";
 
 const navigation = [
   { href: "/", label: "Dashboard", Icon: LayoutDashboard },
@@ -21,7 +24,63 @@ const navigation = [
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [currentUserLabel, setCurrentUserLabel] = useState("");
+  const activeUserIdRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    const supabase = createClient();
+
+    function getUserLabel(user: {
+      email?: string;
+      user_metadata?: Record<string, unknown>;
+    }) {
+      const fullName =
+        typeof user.user_metadata?.full_name === "string"
+          ? user.user_metadata.full_name.trim()
+          : "";
+      return fullName || user.email || "Usuário não identificado";
+    }
+
+    async function loadCurrentUser() {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      activeUserIdRef.current = user?.id ?? null;
+      setCurrentUserLabel(user ? getUserLabel(user) : "");
+    }
+
+    void loadCurrentUser();
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      if (
+        event !== "SIGNED_IN" &&
+        event !== "SIGNED_OUT" &&
+        event !== "USER_UPDATED"
+      ) {
+        return;
+      }
+
+      const user = session?.user ?? null;
+      const previousUserId = activeUserIdRef.current;
+      const nextUserId = user?.id ?? null;
+
+      if (previousUserId && nextUserId && previousUserId !== nextUserId) {
+        toast.info("Conta alterada em outra aba. Tela atualizada.");
+      }
+
+      activeUserIdRef.current = nextUserId;
+      setCurrentUserLabel(user ? getUserLabel(user) : "");
+      router.refresh();
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [router]);
 
   if (pathname === "/login") {
     return <>{children}</>;
@@ -48,6 +107,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           ))}
         </nav>
         <div className="space-y-1 border-t border-zinc-100 p-4 dark:border-zinc-800">
+          {currentUserLabel && (
+            <div className="flex items-center gap-3 px-3 py-2 text-sm text-zinc-600 dark:text-zinc-300">
+              <UserCircle className="h-4 w-4 shrink-0 text-zinc-500 dark:text-zinc-400" />
+              <span className="truncate">{currentUserLabel}</span>
+            </div>
+          )}
           <SettingsLink active={pathname === "/settings"} />
           <LogoutButton />
         </div>
@@ -94,6 +159,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               className="space-y-1 border-t border-zinc-100 p-4 dark:border-zinc-800"
               onClick={() => setMenuOpen(false)}
             >
+              {currentUserLabel && (
+                <div className="flex items-center gap-3 px-3 py-2 text-sm text-zinc-600 dark:text-zinc-300">
+                  <UserCircle className="h-4 w-4 shrink-0 text-zinc-500 dark:text-zinc-400" />
+                  <span className="truncate">{currentUserLabel}</span>
+                </div>
+              )}
               <SettingsLink
                 active={pathname === "/settings"}
                 onClick={() => setMenuOpen(false)}

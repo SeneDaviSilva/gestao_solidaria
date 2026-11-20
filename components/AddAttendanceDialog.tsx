@@ -239,10 +239,11 @@ export function AddAttendanceDialog({
           </div>
           <div className="space-y-2">
             <Label htmlFor="description">Observações adicionais (Opcional)</Label>
-            <Input
-              className="border-zinc-200 dark:border-zinc-700"
+            <textarea
               id="description"
               name="description"
+              placeholder="Digite observações sobre a entrega..."
+              className="flex min-h-[80px] w-full rounded-md border border-zinc-200 bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-zinc-500 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-950 dark:border-zinc-800"
             />
           </div>
           <div className="flex justify-end pt-4">
