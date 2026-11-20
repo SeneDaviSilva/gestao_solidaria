@@ -83,17 +83,6 @@ export async function restoreTrashItem(
         ? "attendances"
         : "support_types";
 
-  if (type === "beneficiary") {
-    const attendanceResult = await supabase
-      .from("attendances")
-      .delete()
-      .eq("beneficiary_id", id)
-      .not("deleted_at", "is", null);
-    if (attendanceResult.error) {
-      return { success: false, error: attendanceResult.error.message };
-    }
-  }
-
   const { error } = await supabase
     .from(table)
     .update({ deleted_at: null })
@@ -130,6 +119,17 @@ export async function permanentDeleteTrashItem(
       : type === "attendance"
         ? "attendances"
         : "support_types";
+
+  if (type === "beneficiary") {
+    const attendanceResult = await supabase
+      .from("attendances")
+      .delete()
+      .eq("beneficiary_id", id)
+      .not("deleted_at", "is", null);
+    if (attendanceResult.error) {
+      return { success: false, error: attendanceResult.error.message };
+    }
+  }
 
   const { error } = await supabase
     .from(table)
