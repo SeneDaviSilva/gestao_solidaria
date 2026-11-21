@@ -44,7 +44,9 @@ export function EditAttendanceDialog({
   supportTypes: SupportType[];
 }) {
   const [open, setOpen] = useState(false);
-  const [beneficiaryId, setBeneficiaryId] = useState(attendance.beneficiary_id);
+  const [selectedBeneficiaryId, setSelectedBeneficiaryId] = useState(
+    attendance.beneficiary_id,
+  );
   const [type, setType] = useState<string | null>(attendance.type);
   const [description, setDescription] = useState(attendance.description ?? "");
   const [addedSupportTypes, setAddedSupportTypes] = useState<SupportType[]>([]);
@@ -61,6 +63,9 @@ export function EditAttendanceDialog({
         !initialSupportTypes.some((supportType) => supportType.id === id),
     ),
   ]);
+  const selectedBeneficiary = beneficiaries.find(
+    (beneficiary) => beneficiary.id === selectedBeneficiaryId,
+  );
 
   async function addNewType() {
     setAddingType(true);
@@ -91,7 +96,7 @@ export function EditAttendanceDialog({
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!beneficiaryId || !type) {
+    if (!selectedBeneficiaryId || !type) {
       toast.error("Selecione o assistido e o tipo de apoio.");
       return;
     }
@@ -99,7 +104,7 @@ export function EditAttendanceDialog({
     setSaving(true);
     try {
       const result = await updateAttendance(attendance.id, {
-        beneficiary_id: beneficiaryId,
+        beneficiary_id: selectedBeneficiaryId,
         type,
         description,
       });
@@ -129,7 +134,7 @@ export function EditAttendanceDialog({
       onOpenChange={(nextOpen) => {
         setOpen(nextOpen);
         if (nextOpen) {
-          setBeneficiaryId(attendance.beneficiary_id);
+          setSelectedBeneficiaryId(attendance.beneficiary_id);
           setType(attendance.type);
           setDescription(attendance.description ?? "");
           setShowNewTypeForm(false);
@@ -161,14 +166,19 @@ export function EditAttendanceDialog({
             </Label>
             <Select
               id={`attendance-beneficiary-${attendance.id}`}
-              required
-              value={beneficiaryId}
+              value={selectedBeneficiaryId}
               onValueChange={(value) =>
-                setBeneficiaryId(typeof value === "string" ? value : "")
+                setSelectedBeneficiaryId(
+                  typeof value === "string" ? value : "",
+                )
               }
             >
               <SelectTrigger className="w-full">
-                <SelectValue placeholder="Selecione..." />
+                <SelectValue placeholder="Selecione...">
+                  {selectedBeneficiary
+                    ? selectedBeneficiary.name
+                    : "Selecione..."}
+                </SelectValue>
               </SelectTrigger>
               <SelectContent>
                 {beneficiaries.map((beneficiary) => (
@@ -178,6 +188,11 @@ export function EditAttendanceDialog({
                 ))}
               </SelectContent>
             </Select>
+            <input
+              type="hidden"
+              name={`beneficiary_id-${attendance.id}`}
+              value={selectedBeneficiaryId}
+            />
           </div>
           <div className="space-y-2">
             <div className="flex items-center justify-between gap-2">

@@ -36,7 +36,7 @@ export function AddAttendanceDialog({
 }) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [beneficiaryId, setBeneficiaryId] = useState<string | null>(null);
+  const [selectedBeneficiaryId, setSelectedBeneficiaryId] = useState("");
   const [type, setType] = useState<string | null>(null);
   const [addedSupportTypes, setAddedSupportTypes] = useState<SupportType[]>([]);
   const [showNewTypeForm, setShowNewTypeForm] = useState(false);
@@ -50,6 +50,9 @@ export function AddAttendanceDialog({
       ({ id }) => !initialSupportTypes.some((supportType) => supportType.id === id),
     ),
   ]);
+  const selectedBeneficiary = beneficiaries.find(
+    (beneficiary) => beneficiary.id === selectedBeneficiaryId,
+  );
 
   async function addSupportType() {
     setAddingType(true);
@@ -90,7 +93,7 @@ export function AddAttendanceDialog({
     const formData = new FormData(event.currentTarget);
     const description = formData.get("description");
 
-    if (!beneficiaryId || !type) {
+    if (!selectedBeneficiaryId || !type) {
       toast.error("Selecione o assistido e o tipo de apoio.");
       return;
     }
@@ -99,7 +102,7 @@ export function AddAttendanceDialog({
 
     try {
       const result = await createAttendance({
-        beneficiary_id: beneficiaryId,
+        beneficiary_id: selectedBeneficiaryId,
         type,
         description:
           typeof description === "string" && description.trim()
@@ -117,6 +120,7 @@ export function AddAttendanceDialog({
       toast.success("Atendimento registrado", {
         description: "Entrega salva com sucesso.",
       });
+      setSelectedBeneficiaryId("");
       setOpen(false);
       router.refresh();
     } catch (error) {
@@ -135,7 +139,7 @@ export function AddAttendanceDialog({
       onOpenChange={(nextOpen) => {
         setOpen(nextOpen);
         if (!nextOpen) {
-          setBeneficiaryId(null);
+          setSelectedBeneficiaryId("");
           setType(null);
           setShowNewTypeForm(false);
           setNewTypeName("");
@@ -159,15 +163,19 @@ export function AddAttendanceDialog({
             <Label htmlFor="beneficiary_id">Assistido</Label>
             <Select
               id="beneficiary_id"
-              name="beneficiary_id"
-              required
-              value={beneficiaryId}
+              value={selectedBeneficiaryId}
               onValueChange={(value) =>
-                setBeneficiaryId(typeof value === "string" ? value : null)
+                setSelectedBeneficiaryId(
+                  typeof value === "string" ? value : "",
+                )
               }
             >
               <SelectTrigger className="w-full border-zinc-200 dark:border-zinc-700">
-                <SelectValue placeholder="Selecione..." />
+                <SelectValue placeholder="Selecione...">
+                  {selectedBeneficiary
+                    ? selectedBeneficiary.name
+                    : "Selecione..."}
+                </SelectValue>
               </SelectTrigger>
               <SelectContent>
                 {beneficiaries.map((b) => (
@@ -177,6 +185,11 @@ export function AddAttendanceDialog({
                 ))}
               </SelectContent>
             </Select>
+            <input
+              type="hidden"
+              name="beneficiary_id"
+              value={selectedBeneficiaryId}
+            />
           </div>
           <div className="space-y-2">
             <div className="flex items-center justify-between gap-2">
