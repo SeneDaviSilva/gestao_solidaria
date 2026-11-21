@@ -102,6 +102,47 @@ export async function createAttendance(
   return { success: true };
 }
 
+export async function updateAttendance(
+  id: string,
+  data: { beneficiary_id: string; type: string; description?: string },
+): Promise<{ success: boolean; error?: string }> {
+  const trimmedId = id.trim();
+  const beneficiaryId = data.beneficiary_id.trim();
+  const type = data.type.trim();
+
+  if (!trimmedId || !beneficiaryId || !type) {
+    return {
+      success: false,
+      error: "Selecione um assistido e um tipo de apoio.",
+    };
+  }
+
+  const supabase = await createClient();
+  const { data: updatedRecord, error } = await supabase
+    .from("attendances")
+    .update({
+      beneficiary_id: beneficiaryId,
+      type,
+      description: data.description?.trim() || "",
+    })
+    .eq("id", trimmedId)
+    .is("deleted_at", null)
+    .select("id")
+    .maybeSingle();
+
+  if (error) {
+    return { success: false, error: error.message };
+  }
+  if (!updatedRecord) {
+    return { success: false, error: "Atendimento não encontrado." };
+  }
+
+  revalidatePath("/attendances");
+  revalidatePath("/history");
+  revalidatePath("/");
+  return { success: true };
+}
+
 export async function createAttendancesBulk(
   items: {
     beneficiary_id: string;

@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import { AttendanceDetailsCell } from "@/components/AttendanceDetailsCell";
 import { DeleteRecordButton } from "@/components/DeleteRecordButton";
+import { EditAttendanceDialog } from "@/components/EditAttendanceDialog";
 import { ExportExcelButton } from "@/components/ExportExcelButton";
 import { SortControls } from "@/components/SortControls";
 import { TableFilters } from "@/components/ui/TableFilters";
@@ -19,6 +20,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { deleteAttendance, getAttendances } from "@/services/attendances";
+import { getBeneficiaries } from "@/services/beneficiaries";
 import { getOrganizationSettings } from "@/services/settings";
 import { getSupportTypes } from "@/services/supportTypes";
 import { resolveSortBy, resolveSortOrder } from "@/utils/sorting";
@@ -55,12 +57,18 @@ async function HistoryContent({ searchParams }: PageProps) {
   const sortOrder = resolveSortOrder(
     typeof resolvedParams.order === "string" ? resolvedParams.order : null,
   );
-  const [attendances, , orgSettings, allAttendances] = await Promise.all([
-    getAttendances(query, type, sortBy, sortOrder),
-    getSupportTypes(),
-    getOrganizationSettings(),
-    getAttendances(),
-  ]);
+  const [attendances, supportTypes, orgSettings, allAttendances, beneficiaries] =
+    await Promise.all([
+      getAttendances(query, type, sortBy, sortOrder),
+      getSupportTypes(),
+      getOrganizationSettings(),
+      getAttendances(),
+      getBeneficiaries(),
+    ]);
+  const mappedBeneficiaries = beneficiaries.map(({ id, name }) => ({
+    id,
+    name,
+  }));
 
   const exportData = allAttendances.map((record) => ({
     Assistido: record.beneficiaries?.name || "Não identificado",
@@ -150,12 +158,24 @@ async function HistoryContent({ searchParams }: PageProps) {
                         por {record.created_by_name || "Sistema"}
                       </div>
                     </TableCell>
-                    <TableCell className="text-right">
-                      <DeleteRecordButton
-                        confirmMessage="Tem certeza de que deseja excluir este atendimento? Esta ação não pode ser desfeita."
-                        id={record.id}
-                        onDelete={deleteAttendance}
-                      />
+                    <TableCell>
+                      <div className="flex items-center justify-end gap-1">
+                        <EditAttendanceDialog
+                          attendance={{
+                            id: record.id,
+                            beneficiary_id: record.beneficiary_id,
+                            type: record.type,
+                            description: record.description,
+                          }}
+                          beneficiaries={mappedBeneficiaries}
+                          supportTypes={supportTypes}
+                        />
+                        <DeleteRecordButton
+                          confirmMessage="Tem certeza de que deseja enviar este atendimento para a lixeira?"
+                          id={record.id}
+                          onDelete={deleteAttendance}
+                        />
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}

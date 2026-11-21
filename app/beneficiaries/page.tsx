@@ -16,6 +16,7 @@ import {
 import { AddBeneficiaryDialog } from "@/components/AddBeneficiaryDialog";
 import { BulkBeneficiariesDialog } from "@/components/BulkBeneficiariesDialog";
 import { DeleteRecordButton } from "@/components/DeleteRecordButton";
+import { EditBeneficiaryDialog } from "@/components/EditBeneficiaryDialog";
 import { ExportExcelButton } from "@/components/ExportExcelButton";
 import { SortControls } from "@/components/SortControls";
 import { SortableHeader } from "@/components/SortableHeader";
@@ -114,15 +115,20 @@ async function BeneficiaryContent({ searchParams }: PageProps) {
           ]}
         />
       </div>
-      <BeneficiaryList beneficiaries={beneficiaries} />
+      <BeneficiaryList
+        beneficiaries={beneficiaries}
+        supportTypes={supportTypes}
+      />
     </div>
   );
 }
 
 function BeneficiaryList({
   beneficiaries,
+  supportTypes,
 }: {
   beneficiaries: Awaited<ReturnType<typeof getBeneficiaries>>;
+  supportTypes: Awaited<ReturnType<typeof getSupportTypes>>;
 }) {
   return (
     <Card className="border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
@@ -165,12 +171,23 @@ function BeneficiaryList({
                       por {person.created_by_name || "Sistema"}
                     </div>
                   </TableCell>
-                  <TableCell className="text-right">
-                    <DeleteRecordButton
-                      confirmMessage="Tem certeza de que deseja excluir este assistido? Os atendimentos vinculados a ele também serão apagados. Esta ação não pode ser desfeita."
-                      id={person.id}
-                      onDelete={deleteBeneficiary}
-                    />
+                  <TableCell>
+                    <div className="flex items-center justify-end gap-1">
+                      <EditBeneficiaryDialog
+                        beneficiary={{
+                          id: person.id,
+                          name: person.name,
+                          contact: person.contact,
+                          category: person.category || "",
+                        }}
+                        supportTypes={supportTypes}
+                      />
+                      <DeleteRecordButton
+                        confirmMessage="Tem certeza de que deseja enviar este assistido e os atendimentos vinculados para a lixeira?"
+                        id={person.id}
+                        onDelete={deleteBeneficiary}
+                      />
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}

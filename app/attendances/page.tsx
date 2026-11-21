@@ -3,6 +3,7 @@ import { AddAttendanceDialog } from "@/components/AddAttendanceDialog";
 import { AttendanceDetailsCell } from "@/components/AttendanceDetailsCell";
 import { BulkAttendancesDialog } from "@/components/BulkAttendancesDialog";
 import { DeleteRecordButton } from "@/components/DeleteRecordButton";
+import { EditAttendanceDialog } from "@/components/EditAttendanceDialog";
 import { ExportExcelButton } from "@/components/ExportExcelButton";
 import { SortControls } from "@/components/SortControls";
 import { SortableHeader } from "@/components/SortableHeader";
@@ -173,12 +174,24 @@ async function AttendanceContent({ searchParams }: PageProps) {
                         por {record.created_by_name || "Sistema"}
                       </div>
                     </TableCell>
-                    <TableCell className="text-right">
-                      <DeleteRecordButton
-                        confirmMessage="Tem certeza de que deseja excluir este atendimento? Esta ação não pode ser desfeita."
-                        id={record.id}
-                        onDelete={deleteAttendance}
-                      />
+                    <TableCell>
+                      <div className="flex items-center justify-end gap-1">
+                        <EditAttendanceDialog
+                          attendance={{
+                            id: record.id,
+                            beneficiary_id: record.beneficiary_id,
+                            type: record.type,
+                            description: record.description,
+                          }}
+                          beneficiaries={mappedBeneficiaries}
+                          supportTypes={supportTypes}
+                        />
+                        <DeleteRecordButton
+                          confirmMessage="Tem certeza de que deseja enviar este atendimento para a lixeira?"
+                          id={record.id}
+                          onDelete={deleteAttendance}
+                        />
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}

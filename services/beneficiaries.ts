@@ -83,6 +83,45 @@ export async function createBeneficiary(
   return { success: true };
 }
 
+export async function updateBeneficiary(
+  id: string,
+  data: { name: string; contact?: string; category: string },
+): Promise<{ success: boolean; error?: string }> {
+  const trimmedId = id.trim();
+  const name = data.name.trim();
+  const contact = (data.contact || "").replace(/\D/g, "").slice(0, 11);
+  const category = data.category.trim();
+
+  if (!trimmedId || !name || !category) {
+    return {
+      success: false,
+      error: "Informe o nome e selecione uma categoria válida.",
+    };
+  }
+
+  const supabase = await createClient();
+  const { data: updatedRecord, error } = await supabase
+    .from("beneficiaries")
+    .update({ name, contact, category })
+    .eq("id", trimmedId)
+    .is("deleted_at", null)
+    .select("id")
+    .maybeSingle();
+
+  if (error) {
+    return { success: false, error: error.message };
+  }
+  if (!updatedRecord) {
+    return { success: false, error: "Assistido não encontrado." };
+  }
+
+  revalidatePath("/beneficiaries");
+  revalidatePath("/attendances");
+  revalidatePath("/history");
+  revalidatePath("/");
+  return { success: true };
+}
+
 export async function createBeneficiariesBulk(
   items: { name: string; contact?: string; category: string }[],
 ): Promise<{ success: boolean; count: number; error?: string }> {
