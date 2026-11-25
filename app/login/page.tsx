@@ -24,6 +24,26 @@ export default function LoginPage() {
   const supabase = createClient();
 
   useEffect(() => {
+    const hash = window.location.hash.substring(1);
+    if (hash) {
+      const hashParams = new URLSearchParams(hash);
+      if (
+        hashParams.get("access_token") ||
+        hashParams.get("type") === "recovery"
+      ) {
+        window.location.replace(`/reset-password#${hash}`);
+        return;
+      }
+      if (hashParams.get("error")) {
+        setMode("forgot");
+        setErrorMessage(
+          "O link de recuperação expirou ou já foi utilizado. Informe seu e-mail para gerar um novo link."
+        );
+        window.history.replaceState({}, "", "/login");
+        return;
+      }
+    }
+
     const params = new URLSearchParams(window.location.search);
     if (params.get("error") === "recovery_link_invalid") {
       setMode("forgot");
@@ -119,8 +139,7 @@ export default function LoginPage() {
 
         if (data.session) {
           setSuccessMessage("Conta criada com sucesso! Entrando...");
-          router.push("/");
-          router.refresh();
+          window.location.replace("/");
         } else {
           setSuccessMessage(
             "Cadastro realizado! Verifique seu e-mail para confirmar a conta antes de entrar."
@@ -140,8 +159,7 @@ export default function LoginPage() {
         return;
       }
 
-      router.push("/");
-      router.refresh();
+      window.location.replace("/");
     } finally {
       setLoading(false);
     }

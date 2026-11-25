@@ -122,17 +122,16 @@ export default function ResetPasswordPage() {
 
       if (result.error) {
         setErrorMessage(result.error);
+        setLoading(false);
         return;
       }
 
       setSuccessMessage("Senha atualizada com sucesso! Acessando o painel...");
-      router.push("/");
-      router.refresh();
+      window.location.replace("/");
     } catch {
       setErrorMessage(
         "Ocorreu uma falha de conexão ao salvar a senha. Tente novamente."
       );
-    } finally {
       setLoading(false);
     }
   }
