@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
+import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -69,9 +70,25 @@ export default function LoginPage() {
 
     try {
       if (mode === "forgot") {
-        const { error } = await supabase.auth.resetPasswordForEmail(cleanEmail, {
-          redirectTo: `${window.location.origin}/reset-password`,
-        });
+        const recoveryClient = createSupabaseClient(
+          process.env.NEXT_PUBLIC_SUPABASE_URL!,
+          process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+          {
+            auth: {
+              flowType: "implicit",
+              persistSession: false,
+              autoRefreshToken: false,
+              detectSessionInUrl: false,
+            },
+          }
+        );
+
+        const { error } = await recoveryClient.auth.resetPasswordForEmail(
+          cleanEmail,
+          {
+            redirectTo: `${window.location.origin}/reset-password`,
+          }
+        );
 
         if (error) {
           setErrorMessage(formatAuthError(error.message));
@@ -79,7 +96,7 @@ export default function LoginPage() {
         }
 
         setSuccessMessage(
-          "Enviamos um link de recuperação para o seu e-mail. Abra o link neste mesmo navegador para criar sua nova senha."
+          "Enviamos um link de recuperação para o seu e-mail. Verifique sua caixa de entrada e a pasta de spam."
         );
         return;
       }

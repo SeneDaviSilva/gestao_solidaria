@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
+import { updatePasswordAction } from "./actions";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,70 +23,85 @@ export default function ResetPasswordPage() {
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   const router = useRouter();
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
 
   useEffect(() => {
     let active = true;
 
-    async function validateRecoverySession() {
-      const params = new URLSearchParams(window.location.search);
-      const code = params.get("code");
+    async function validateSession() {
+      try {
+        const hash = window.location.hash.substring(1);
+        const hashParams = new URLSearchParams(hash);
 
-      if (code) {
-        const { error } = await supabase.auth.exchangeCodeForSession(code);
-        if (!active) return;
-
-        if (!error) {
-          setHasValidSession(true);
-          setCheckingSession(false);
+        if (hashParams.get("error")) {
+          if (!active) return;
+          setSessionError(
+            "Este link de recuperação é inválido ou já expirou. Solicite um novo link na tela de login."
+          );
           window.history.replaceState({}, "", "/reset-password");
           return;
         }
 
-        setSessionError(
-          "Não foi possível validar o link neste navegador. Abra o link do e-mail no mesmo navegador onde você solicitou a recuperação ou peça um novo link."
-        );
-        setCheckingSession(false);
-        return;
-      }
+        const accessToken = hashParams.get("access_token");
+        const refreshToken = hashParams.get("refresh_token");
 
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
+        if (accessToken && refreshToken) {
+          const { error } = await supabase.auth.setSession({
+            access_token: accessToken,
+            refresh_token: refreshToken,
+          });
+          if (!active) return;
+          if (!error) {
+            setHasValidSession(true);
+            window.history.replaceState({}, "", "/reset-password");
+            return;
+          }
+        }
 
-      if (active) {
-        if (session) {
+        const params = new URLSearchParams(window.location.search);
+        const code = params.get("code");
+
+        if (code) {
+          const { error } = await supabase.auth.exchangeCodeForSession(code);
+          if (!active) return;
+          if (!error) {
+            setHasValidSession(true);
+            window.history.replaceState({}, "", "/reset-password");
+            return;
+          }
+        }
+
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+
+        if (!active) return;
+
+        if (user) {
           setHasValidSession(true);
         } else {
           setSessionError(
             "Este link de recuperação é inválido ou já expirou. Solicite um novo link na tela de login."
           );
         }
-        setCheckingSession(false);
+      } finally {
+        if (active) {
+          setCheckingSession(false);
+        }
       }
     }
 
-    validateRecoverySession();
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((event, session) => {
-      if (!active) return;
-      if (event === "PASSWORD_RECOVERY" || event === "SIGNED_IN" || session) {
-        setHasValidSession(true);
-        setSessionError(null);
-        setCheckingSession(false);
-      }
-    });
+    validateSession();
 
     return () => {
       active = false;
-      subscription.unsubscribe();
     };
   }, [supabase]);
 
   async function handleUpdatePassword(e: React.FormEvent) {
     e.preventDefault();
+    if (loading) return;
+
     setErrorMessage(null);
     setSuccessMessage(null);
 
@@ -102,22 +118,20 @@ export default function ResetPasswordPage() {
     setLoading(true);
 
     try {
-      const { error } = await supabase.auth.updateUser({
-        password,
-      });
+      const result = await updatePasswordAction(password);
 
-      if (error) {
-        setErrorMessage(
-          "Não foi possível atualizar a senha. O link pode ter expirado; solicite um novo na tela de login."
-        );
+      if (result.error) {
+        setErrorMessage(result.error);
         return;
       }
 
       setSuccessMessage("Senha atualizada com sucesso! Acessando o painel...");
-      setTimeout(() => {
-        router.push("/");
-        router.refresh();
-      }, 1500);
+      router.push("/");
+      router.refresh();
+    } catch {
+      setErrorMessage(
+        "Ocorreu uma falha de conexão ao salvar a senha. Tente novamente."
+      );
     } finally {
       setLoading(false);
     }
