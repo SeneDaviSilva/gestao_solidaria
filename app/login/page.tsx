@@ -167,18 +167,7 @@ export default function LoginPage() {
 
             {mode !== "forgot" && (
               <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="password">Senha</Label>
-                  {mode === "login" && (
-                    <button
-                      type="button"
-                      onClick={() => switchMode("forgot")}
-                      className="text-xs text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100 underline-offset-4 hover:underline"
-                    >
-                      Esqueci minha senha
-                    </button>
-                  )}
-                </div>
+                <Label htmlFor="password">Senha</Label>
                 <Input
                   id="password"
                   type="password"
@@ -219,7 +208,7 @@ export default function LoginPage() {
             </Button>
           </form>
 
-          <div className="mt-4 text-center space-y-2">
+          <div className="mt-4 flex flex-col items-center space-y-2 text-center">
             {mode === "forgot" ? (
               <button
                 type="button"
@@ -229,15 +218,27 @@ export default function LoginPage() {
                 Voltar para o login
               </button>
             ) : (
-              <button
-                type="button"
-                onClick={() => switchMode(mode === "signup" ? "login" : "signup")}
-                className="text-xs text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100 underline-offset-4 hover:underline"
-              >
-                {mode === "signup"
-                  ? "Já possui uma conta? Entrar"
-                  : "Não tem uma conta? Cadastre-se"}
-              </button>
+              <>
+                <button
+                  type="button"
+                  onClick={() => switchMode(mode === "signup" ? "login" : "signup")}
+                  className="text-xs text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100 underline-offset-4 hover:underline"
+                >
+                  {mode === "signup"
+                    ? "Já possui uma conta? Entrar"
+                    : "Não tem uma conta? Cadastre-se"}
+                </button>
+
+                {mode === "login" && (
+                  <button
+                    type="button"
+                    onClick={() => switchMode("forgot")}
+                    className="text-xs text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100 underline-offset-4 hover:underline"
+                  >
+                    Esqueci a senha
+                  </button>
+                )}
+              </>
             )}
           </div>
         </CardContent>
