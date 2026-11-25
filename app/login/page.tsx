@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -21,6 +21,17 @@ export default function LoginPage() {
 
   const router = useRouter();
   const supabase = createClient();
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("error") === "recovery_link_invalid") {
+      setMode("forgot");
+      setErrorMessage(
+        "O link de recuperação expirou ou já foi utilizado. Informe seu e-mail para gerar um novo link."
+      );
+      window.history.replaceState({}, "", "/login");
+    }
+  }, []);
 
   function switchMode(newMode: AuthMode) {
     setMode(newMode);
@@ -59,7 +70,7 @@ export default function LoginPage() {
     try {
       if (mode === "forgot") {
         const { error } = await supabase.auth.resetPasswordForEmail(cleanEmail, {
-          redirectTo: `${window.location.origin}/reset-password`,
+          redirectTo: `${window.location.origin}/auth/callback?next=/reset-password`,
         });
 
         if (error) {
