@@ -1,210 +1,247 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { toast } from "sonner";
+import { createClient } from "@/utils/supabase/client";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { createClient } from "@/utils/supabase/client";
+
+type AuthMode = "login" | "signup" | "forgot";
 
 export default function LoginPage() {
-  const [isSignUp, setIsSignUp] = useState(false);
+  const [mode, setMode] = useState<AuthMode>("login");
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+
   const router = useRouter();
   const supabase = createClient();
 
-  async function onSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+  function switchMode(newMode: AuthMode) {
+    setMode(newMode);
     setErrorMessage(null);
+    setSuccessMessage(null);
+  }
+
+  function formatAuthError(message: string) {
+    const lower = message.toLowerCase();
+    if (lower.includes("email not confirmed")) {
+      return "E-mail ainda não confirmado. Verifique sua caixa de entrada ou peça ao administrador para liberar o acesso.";
+    }
+    if (lower.includes("invalid login credentials")) {
+      return "E-mail ou senha inválidos. Confira seus dados e tente novamente.";
+    }
+    if (lower.includes("user already registered")) {
+      return "Este e-mail já está cadastrado. Clique em 'Já possui uma conta? Entrar'.";
+    }
+    if (lower.includes("password should be at least")) {
+      return "A senha precisa ter pelo menos 6 caracteres.";
+    }
+    if (lower.includes("rate limit")) {
+      return "Muitas tentativas seguidas. Aguarde alguns instantes e tente novamente.";
+    }
+    return `Erro ao autenticar: ${message}`;
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
     setLoading(true);
+    setErrorMessage(null);
+    setSuccessMessage(null);
 
-    const formData = new FormData(event.currentTarget);
-    const name = formData.get("name");
-    const email = formData.get("email");
-    const password = formData.get("password");
-    const fullName = typeof name === "string" ? name.trim() : "";
-
-    if (typeof email !== "string" || typeof password !== "string") {
-      setErrorMessage("Informe seu e-mail e sua senha.");
-      setLoading(false);
-      return;
-    }
-
-    if (isSignUp && !fullName) {
-      setErrorMessage("Informe seu nome completo.");
-      setLoading(false);
-      return;
-    }
-
-    if (isSignUp && password.length < 6) {
-      setErrorMessage("A senha deve ter pelo menos 6 caracteres.");
-      setLoading(false);
-      return;
-    }
+    const cleanEmail = email.trim().toLowerCase();
 
     try {
-      if (isSignUp) {
+      if (mode === "forgot") {
+        const { error } = await supabase.auth.resetPasswordForEmail(cleanEmail, {
+          redirectTo: `${window.location.origin}/reset-password`,
+        });
+
+        if (error) {
+          setErrorMessage(formatAuthError(error.message));
+          return;
+        }
+
+        setSuccessMessage(
+          "Enviamos um link de recuperação para o seu e-mail. Verifique sua caixa de entrada e a pasta de spam."
+        );
+        return;
+      }
+
+      if (mode === "signup") {
         const { data, error } = await supabase.auth.signUp({
-          email,
+          email: cleanEmail,
           password,
           options: {
-            data: { full_name: fullName },
+            data: {
+              full_name: name.trim(),
+            },
           },
         });
 
         if (error) {
-          const message =
-            "Não foi possível criar a conta. Verifique o e-mail e se a senha tem pelo menos 6 caracteres.";
-          setErrorMessage(message);
-          toast.error(message);
+          setErrorMessage(formatAuthError(error.message));
           return;
         }
 
         if (data.session) {
-          toast.success("Conta criada com sucesso!");
+          setSuccessMessage("Conta criada com sucesso! Entrando...");
           router.push("/");
           router.refresh();
-          return;
-        }
-
-        if (data.user) {
-          toast.success(
-            "Conta criada. Verifique seu e-mail para confirmar o cadastro.",
+        } else {
+          setSuccessMessage(
+            "Cadastro realizado! Verifique seu e-mail para confirmar a conta antes de entrar."
           );
-          setIsSignUp(false);
-          return;
+          setMode("login");
         }
-
-        const message = "Não foi possível confirmar a criação da conta.";
-        setErrorMessage(message);
-        toast.error(message);
         return;
       }
 
       const { error } = await supabase.auth.signInWithPassword({
-        email,
+        email: cleanEmail,
         password,
       });
 
       if (error) {
-        const message = "E-mail ou senha inválidos. Confira seus dados e tente novamente.";
-        setErrorMessage(message);
-        toast.error(message);
+        setErrorMessage(formatAuthError(error.message));
         return;
       }
 
       router.push("/");
       router.refresh();
-    } catch (error) {
-      const message = isSignUp
-        ? "Não foi possível criar a conta. Tente novamente."
-        : error instanceof Error
-          ? error.message
-          : "Não foi possível entrar. Tente novamente.";
-      setErrorMessage(message);
-      toast.error(
-        isSignUp ? "Não foi possível criar a conta." : "Não foi possível entrar.",
-        { description: message },
-      );
     } finally {
       setLoading(false);
     }
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center p-4">
-      <Card className="w-full max-w-sm border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-        <CardHeader>
-          <CardTitle className="text-xl">
-            {isSignUp ? "Criar nova conta" : "Entrar no sistema"}
+    <div className="min-h-screen flex items-center justify-center bg-[#fafafa] dark:bg-zinc-950 p-4">
+      <Card className="w-full max-w-md shadow-sm border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900">
+        <CardHeader className="space-y-1 text-center">
+          <CardTitle className="text-2xl font-semibold tracking-tight">
+            Gestão Solidária
           </CardTitle>
           <p className="text-sm text-zinc-500 dark:text-zinc-400">
-            {isSignUp
-              ? "Preencha seus dados para criar uma conta."
-              : "Gestão Solidária"}
+            {mode === "signup" && "Crie sua conta de voluntário ou administrador"}
+            {mode === "login" && "Entre com suas credenciais para acessar o painel"}
+            {mode === "forgot" && "Informe seu e-mail para receber o link de redefinição"}
           </p>
         </CardHeader>
+
         <CardContent>
-          <form className="space-y-4" onSubmit={onSubmit}>
-            {isSignUp && (
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {mode === "signup" && (
               <div className="space-y-2">
                 <Label htmlFor="name">Nome completo</Label>
                 <Input
-                  autoComplete="name"
-                  className="border-zinc-200 dark:border-zinc-700"
                   id="name"
-                  name="name"
-                  required
                   type="text"
+                  placeholder="Ex: Maria da Silva"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  required
+                  className="border-zinc-200 dark:border-zinc-800"
                 />
               </div>
             )}
+
             <div className="space-y-2">
               <Label htmlFor="email">E-mail</Label>
               <Input
-                autoComplete="email"
-                className="border-zinc-200 dark:border-zinc-700"
                 id="email"
-                name="email"
-                required
                 type="email"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="password">Senha</Label>
-              <Input
-                autoComplete="current-password"
-                className="border-zinc-200 dark:border-zinc-700"
-                id="password"
-                name="password"
-                minLength={isSignUp ? 6 : undefined}
+                autoCapitalize="none"
+                autoCorrect="off"
+                placeholder="seu@email.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 required
-                type="password"
+                className="border-zinc-200 dark:border-zinc-800"
               />
             </div>
-            {errorMessage && (
-              <p aria-live="polite" className="text-sm text-red-600" role="alert">
-                {errorMessage}
-              </p>
+
+            {mode !== "forgot" && (
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="password">Senha</Label>
+                  {mode === "login" && (
+                    <button
+                      type="button"
+                      onClick={() => switchMode("forgot")}
+                      className="text-xs text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100 underline-offset-4 hover:underline"
+                    >
+                      Esqueci minha senha
+                    </button>
+                  )}
+                </div>
+                <Input
+                  id="password"
+                  type="password"
+                  placeholder="Mínimo 6 caracteres"
+                  minLength={6}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  className="border-zinc-200 dark:border-zinc-800"
+                />
+              </div>
             )}
+
+            {errorMessage && (
+              <div className="p-3 rounded-md bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900 text-xs text-red-600 dark:text-red-400">
+                {errorMessage}
+              </div>
+            )}
+
+            {successMessage && (
+              <div className="p-3 rounded-md bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900 text-xs text-emerald-700 dark:text-emerald-400">
+                {successMessage}
+              </div>
+            )}
+
             <Button
-              className="w-full bg-zinc-900 text-white hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-300"
-              disabled={loading}
               type="submit"
+              disabled={loading}
+              className="w-full bg-zinc-900 text-white hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
             >
               {loading
-                ? isSignUp
-                  ? "Criando conta..."
-                  : "Entrando..."
-                : isSignUp
-                  ? "Criar conta"
-                  : "Entrar"}
-            </Button>
-            <Button
-              className="w-full"
-              disabled={loading}
-              onClick={() => {
-                setIsSignUp((current) => !current);
-                setErrorMessage(null);
-              }}
-              type="button"
-              variant="link"
-            >
-              {isSignUp
-                ? "Já possui uma conta? Entrar"
-                : "Não tem uma conta? Cadastre-se"}
+                ? "Processando..."
+                : mode === "signup"
+                ? "Criar conta"
+                : mode === "forgot"
+                ? "Enviar link de recuperação"
+                : "Entrar no sistema"}
             </Button>
           </form>
+
+          <div className="mt-4 text-center space-y-2">
+            {mode === "forgot" ? (
+              <button
+                type="button"
+                onClick={() => switchMode("login")}
+                className="text-xs text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100 underline-offset-4 hover:underline"
+              >
+                Voltar para o login
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => switchMode(mode === "signup" ? "login" : "signup")}
+                className="text-xs text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100 underline-offset-4 hover:underline"
+              >
+                {mode === "signup"
+                  ? "Já possui uma conta? Entrar"
+                  : "Não tem uma conta? Cadastre-se"}
+              </button>
+            )}
+          </div>
         </CardContent>
       </Card>
-    </main>
+    </div>
   );
 }
