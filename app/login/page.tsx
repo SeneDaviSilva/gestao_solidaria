@@ -70,7 +70,7 @@ export default function LoginPage() {
     try {
       if (mode === "forgot") {
         const { error } = await supabase.auth.resetPasswordForEmail(cleanEmail, {
-          redirectTo: `${window.location.origin}/auth/callback?next=/reset-password`,
+          redirectTo: `${window.location.origin}/reset-password`,
         });
 
         if (error) {
@@ -79,7 +79,7 @@ export default function LoginPage() {
         }
 
         setSuccessMessage(
-          "Enviamos um link de recuperação para o seu e-mail. Verifique sua caixa de entrada e a pasta de spam."
+          "Enviamos um link de recuperação para o seu e-mail. Abra o link neste mesmo navegador para criar sua nova senha."
         );
         return;
       }

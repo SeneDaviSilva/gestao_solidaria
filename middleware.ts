@@ -23,9 +23,17 @@ export async function middleware(request: NextRequest) {
     }
   )
 
+  const pathname = request.nextUrl.pathname
+  const code = request.nextUrl.searchParams.get('code')
+
+  if (code && !pathname.startsWith('/reset-password') && !pathname.startsWith('/auth/callback')) {
+    const url = request.nextUrl.clone()
+    url.pathname = '/reset-password'
+    return NextResponse.redirect(url)
+  }
+
   const { data: { user } } = await supabase.auth.getUser()
 
-  const pathname = request.nextUrl.pathname
   const isLoginPage = pathname.startsWith('/login')
   const isPublicRoute =
     isLoginPage ||

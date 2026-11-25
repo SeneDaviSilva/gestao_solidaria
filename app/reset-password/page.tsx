@@ -17,6 +17,7 @@ export default function ResetPasswordPage() {
   const [loading, setLoading] = useState(false);
   const [checkingSession, setCheckingSession] = useState(true);
   const [hasValidSession, setHasValidSession] = useState(false);
+  const [sessionError, setSessionError] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
@@ -32,12 +33,20 @@ export default function ResetPasswordPage() {
 
       if (code) {
         const { error } = await supabase.auth.exchangeCodeForSession(code);
-        if (!error && active) {
+        if (!active) return;
+
+        if (!error) {
           setHasValidSession(true);
           setCheckingSession(false);
           window.history.replaceState({}, "", "/reset-password");
           return;
         }
+
+        setSessionError(
+          "Não foi possível validar o link neste navegador. Abra o link do e-mail no mesmo navegador onde você solicitou a recuperação ou peça um novo link."
+        );
+        setCheckingSession(false);
+        return;
       }
 
       const {
@@ -45,7 +54,13 @@ export default function ResetPasswordPage() {
       } = await supabase.auth.getSession();
 
       if (active) {
-        setHasValidSession(Boolean(session));
+        if (session) {
+          setHasValidSession(true);
+        } else {
+          setSessionError(
+            "Este link de recuperação é inválido ou já expirou. Solicite um novo link na tela de login."
+          );
+        }
         setCheckingSession(false);
       }
     }
@@ -58,6 +73,7 @@ export default function ResetPasswordPage() {
       if (!active) return;
       if (event === "PASSWORD_RECOVERY" || event === "SIGNED_IN" || session) {
         setHasValidSession(true);
+        setSessionError(null);
         setCheckingSession(false);
       }
     });
@@ -133,8 +149,7 @@ export default function ResetPasswordPage() {
           ) : !hasValidSession ? (
             <div className="space-y-4">
               <div className="p-3 rounded-md bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900 text-xs text-red-600 dark:text-red-400">
-                Este link de recuperação é inválido ou já expirou. Solicite um
-                novo link na tela de login para redefinir sua senha.
+                {sessionError}
               </div>
               <Button
                 type="button"
